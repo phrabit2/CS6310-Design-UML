@@ -1,0 +1,195 @@
+@startuml Billing Period and Power Tracking
+
+title Starting Billing Period and Tracking Power Generated, Costs, and Revenue
+
+actor SystemAdmin
+participant ":PowerCompany" as PC
+participant ":BillingCycle" as BC
+participant ":PowerPlant" as PP
+participant ":Substation" as SUB
+participant ":Transformer" as TRANS
+participant ":Customer" as CUST
+participant ":Transaction" as TXN
+collections "Customers" as CUSTS
+
+== Start Billing Period ==
+
+SystemAdmin -> BC ** : create(cycleId, startDate, endDate)
+activate BC
+BC -> BC : status = ACTIVE
+note right: New billing cycle begins
+
+BC --> SystemAdmin : billing cycle created
+
+== Power Generation and Tracking ==
+
+loop during billing period
+    
+    SystemAdmin -> PP : recordPowerProduction(kWh)
+    activate PP
+    PP -> PP : powerProduced += kWh
+    note right: Track total power generated\nfor this cycle
+    PP --> SystemAdmin : production recorded
+    
+    PP -> PP : calculateProductionCost()
+    PP -> PP : cost = powerProduced × productionCostPerKWh
+    
+    PP -> PC : updateCosts(cost)
+    activate PC
+    PC -> PC : totalCosts += cost
+    
+    create TXN
+    PC -> TXN ** : create(transactionId, date, cost, PRODUCTION_COST)
+    activate TXN
+    PC -> PC : transactions.add(TXN)
+    deactivate TXN
+    
+    PC --> PP : cost updated
+    deactivate PC
+    deactivate PP
+    
+end
+
+== Maintenance Costs ==
+
+loop for each substation
+    SystemAdmin -> SUB : getMaintenanceCost()
+    activate SUB
+    SUB --> SystemAdmin : maintenanceCost
+    
+    SystemAdmin -> PC : recordMaintenanceCost(maintenanceCost)
+    activate PC
+    PC -> PC : totalCosts += maintenanceCost
+    
+    create TXN
+    PC -> TXN ** : create(transactionId, date, cost, MAINTENANCE_COST)
+    activate TXN
+    PC -> PC : transactions.add(TXN)
+    deactivate TXN
+    deactivate PC
+    deactivate SUB
+end
+
+loop for each transformer
+    SystemAdmin -> TRANS : getMaintenanceCost()
+    activate TRANS
+    TRANS --> SystemAdmin : maintenanceCost
+    
+    SystemAdmin -> PC : recordMaintenanceCost(maintenanceCost)
+    activate PC
+    PC -> PC : totalCosts += maintenanceCost
+    
+    create TXN
+    PC -> TXN ** : create(transactionId, date, cost, MAINTENANCE_COST)
+    activate TXN
+    PC -> PC : transactions.add(TXN)
+    deactivate TXN
+    deactivate PC
+    deactivate TRANS
+end
+
+== Customer Power Usage ==
+
+loop during billing period
+    SystemAdmin -> CUST : recordPowerUsage(kWh)
+    activate CUST
+    CUST -> CUST : powerUsage += kWh
+    note right: Track customer consumption
+    CUST --> SystemAdmin : usage recorded
+    deactivate CUST
+end
+
+== End Billing Period and Calculate Bills ==
+
+SystemAdmin -> BC : closeCycle()
+BC -> BC : status = PROCESSING
+BC --> SystemAdmin : cycle closed
+
+SystemAdmin -> PC : processBillingCycle(BC)
+activate PC
+
+loop for each customer in customers
+    PC -> CUSTS : forEach(customer)
+    activate CUSTS
+    
+    CUSTS -> CUST : calculateBill(ratePerKWh)
+    activate CUST
+    CUST -> CUST : bill = powerUsage × ratePerKWh
+    CUST -> CUST : totalAmountDue += bill
+    CUST --> CUSTS : billAmount
+    deactivate CUST
+    
+    CUSTS -> PC : billAmount
+    PC -> PC : totalRevenue += billAmount
+    
+    create TXN
+    PC -> TXN ** : create(transactionId, date, billAmount, CUSTOMER_BILL)
+    activate TXN
+    PC -> PC : transactions.add(TXN)
+    note right: Record billing transaction
+    deactivate TXN
+    
+    CUSTS -> CUST : resetPowerUsage()
+    activate CUST
+    CUST -> CUST : powerUsage = 0
+    note right: Reset for next cycle
+    deactivate CUST
+    
+    deactivate CUSTS
+end
+
+== Calculate Financial Summary ==
+
+PC -> PC : calculateTotalCosts()
+PC -> PC : costs = sum of all cost transactions
+
+PC -> PC : calculateProfit()
+PC -> PC : profit = totalRevenue - totalCosts
+
+note right of PC
+  Financial Summary:
+  - Total Revenue: $X from customer bills
+  - Total Costs: $Y (production + maintenance)
+  - Net Profit: $(X-Y)
+end note
+
+PC --> SystemAdmin : billing cycle processed\nprofit = $Z
+
+BC -> BC : status = CLOSED
+deactivate PC
+
+== Customer Payment (Optional) ==
+
+opt customer makes payment
+    SystemAdmin -> CUST : makePayment(amount)
+    activate CUST
+    CUST -> CUST : totalAmountDue -= amount
+    CUST --> SystemAdmin : payment received
+    
+    CUST -> PC : recordPayment(amount)
+    activate PC
+    create TXN
+    PC -> TXN ** : create(transactionId, date, amount, CUSTOMER_PAYMENT)
+    activate TXN
+    PC -> PC : transactions.add(TXN)
+    deactivate TXN
+    deactivate PC
+    deactivate CUST
+end
+
+== Reset for Next Cycle ==
+
+SystemAdmin -> PP : resetProduction()
+activate PP
+PP -> PP : powerProduced = 0
+note right: Ready for next billing cycle
+deactivate PP
+
+note over SystemAdmin, CUST
+  Billing cycle complete
+  System ready for next period
+end note
+
+deactivate BC
+
+@enduml

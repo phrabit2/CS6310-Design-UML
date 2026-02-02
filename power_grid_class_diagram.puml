@@ -1,0 +1,227 @@
+@startuml Power Grid Simulation System
+
+' Enumerations
+enum CustomerType {
+  RESIDENTIAL
+  COMMERCIAL
+}
+
+enum EquipmentType {
+  POWER_PLANT
+  SUBSTATION
+  TRANSFORMER
+}
+
+enum IssueStatus {
+  REPORTED
+  DISPATCHED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum CycleStatus {
+  ACTIVE
+  CLOSED
+  PROCESSING
+}
+
+enum TransactionType {
+  CUSTOMER_BILL
+  CUSTOMER_PAYMENT
+  MAINTENANCE_COST
+  PRODUCTION_COST
+  BUILD_COST
+  REPAIR_COST
+}
+
+' Interfaces
+interface Equipment {
+  + getId(): String
+  + getLocation(): Location
+  + getBuildCost(): Decimal
+}
+
+interface Maintainable {
+  + getMaintenanceCost(): Decimal
+}
+
+' Value Object
+class Location <<value object>> {
+  - x: Integer
+  - y: Integer
+  + manhattanDistance(other: Location): Integer
+  + isWithinDistance(other: Location, maxDist: Integer): Boolean
+}
+
+' Core Entities
+class PowerCompany {
+  - shortName: String
+  - longName: String
+  - ratePerKWh: Decimal
+  - totalRevenue: Decimal
+  - totalCosts: Decimal
+  + addCustomer(customer: Customer): void
+  + removeCustomer(accountNumber: String): void
+  + addPowerPlant(plant: PowerPlant): void
+  + addEmployee(employee: Employee): void
+  + calculateTotalCosts(): Decimal
+  + calculateProfit(): Decimal
+  + processBillingCycle(cycle: BillingCycle): void
+}
+
+class Customer {
+  - accountNumber: String
+  - name: String
+  - location: Location
+  - customerType: CustomerType
+  - powerUsage: Decimal
+  - totalAmountDue: Decimal
+  + recordPowerUsage(kWh: Decimal): void
+  + resetPowerUsage(): void
+  + calculateBill(rate: Decimal): Decimal
+  + makePayment(amount: Decimal): void
+}
+
+class PowerPlant {
+  - plantId: String
+  - location: Location
+  - buildCost: Decimal
+  - productionCostPerKWh: Decimal
+  - powerProduced: Decimal
+  + addSubstation(substation: Substation): Boolean
+  + removeSubstation(substationId: String): void
+  + getSubstationCount(): Integer
+  + canAddSubstation(): Boolean
+  + recordPowerProduction(kWh: Decimal): void
+  + calculateProductionCost(): Decimal
+  + resetProduction(): void
+}
+
+class Substation {
+  - substationId: String
+  - location: Location
+  - buildCost: Decimal
+  - maintenanceCost: Decimal
+  + addTransformer(transformer: Transformer): Boolean
+  + removeTransformer(transformerId: String): void
+  + getTransformerCount(): Integer
+  + canAddTransformer(): Boolean
+  + getMaintenanceCost(): Decimal
+}
+
+class Transformer {
+  - transformerId: String
+  - location: Location
+  - installationCost: Decimal
+  - maintenanceCost: Decimal
+  + addCustomer(customer: Customer): Boolean
+  + removeCustomer(accountNumber: String): void
+  + getCustomerCount(): Integer
+  + canAddCustomer(): Boolean
+  + getMaintenanceCost(): Decimal
+}
+
+class Employee {
+  - employeeId: String
+  - name: String
+  - startDate: Date
+  - hourlyWage: Decimal
+  - isAvailable: Boolean
+  + dispatch(issue: EquipmentIssue): void
+  + completeWork(): void
+  + calculateLaborCost(hours: Decimal): Decimal
+}
+
+class EquipmentIssue {
+  - issueId: String
+  - equipmentType: EquipmentType
+  - equipmentId: String
+  - hoursRequired: Decimal
+  - materialsCost: Decimal
+  - status: IssueStatus
+  - reportedDate: Date
+  - resolvedDate: Date
+  + assignEmployee(employee: Employee): void
+  + calculateTotalCost(): Decimal
+  + markResolved(): void
+  + getAssignedEmployee(): Employee
+}
+
+class BillingCycle {
+  - cycleId: String
+  - startDate: Date
+  - endDate: Date
+  - status: CycleStatus
+  + closeCycle(): void
+  + isActive(): Boolean
+}
+
+class Transaction {
+  - transactionId: String
+  - transactionDate: Date
+  - amount: Decimal
+  - transactionType: TransactionType
+  - description: String
+  + isRevenue(): Boolean
+  + isCost(): Boolean
+}
+
+' Relationships
+PowerCompany "1" *-- "0..*" Customer : customers
+PowerCompany "1" *-- "1..*" PowerPlant : powerPlants
+PowerCompany "1" *-- "1..*" Employee : employees
+PowerCompany "1" *-- "0..*" Transaction : transactions
+PowerCompany "1" *-- "0..*" EquipmentIssue : equipmentIssues
+PowerCompany "1" -- "0..*" BillingCycle : billingCycles
+
+PowerPlant "1" o-- "0..20" Substation : substations
+Substation "1" o-- "0..10" Transformer : transformers
+Transformer "1" -- "0..5" Customer : customers
+
+Employee "0..1" -- "0..1" EquipmentIssue : assignedIssue
+EquipmentIssue "0..*" -- "0..1" PowerPlant : affectedPlant
+EquipmentIssue "0..*" -- "0..1" Substation : affectedSubstation
+EquipmentIssue "0..*" -- "0..1" Transformer : affectedTransformer
+
+Customer "1" -- "0..*" Transaction : transactions
+
+' Interface implementations
+PowerPlant ..|> Equipment
+Substation ..|> Equipment
+Transformer ..|> Equipment
+
+Substation ..|> Maintainable
+Transformer ..|> Maintainable
+
+' Enum associations
+Customer -- CustomerType
+EquipmentIssue -- EquipmentType
+EquipmentIssue -- IssueStatus
+BillingCycle -- CycleStatus
+Transaction -- TransactionType
+
+' Location associations
+Customer -- Location
+PowerPlant -- Location
+Substation -- Location
+Transformer -- Location
+
+note right of PowerPlant
+  Constraint: Maximum 20 substations
+  Distance constraint: Substations must be
+  within MAX_PLANT_DISTANCE
+end note
+
+note right of Substation
+  Constraint: Maximum 10 transformers
+  Distance constraint: Transformers must be
+  within MAX_SUBSTATION_DISTANCE
+end note
+
+note right of Transformer
+  Constraint: Maximum 5 customers
+  Distance constraint: Customers must be
+  within MAX_TRANSFORMER_DISTANCE
+end note
+
+@enduml

@@ -1,0 +1,132 @@
+@startuml System Startup and Shutdown
+
+title System Startup - Creating Objects and System Stop
+
+actor SystemAdmin
+participant ":PowerCompany" as PC
+participant ":PowerPlant" as PP1
+participant ":Substation" as SUB1
+participant ":Transformer" as TRANS1
+participant ":Customer" as CUST1
+participant ":Employee" as EMP1
+participant ":BillingCycle" as BC
+
+== System Initialization ==
+
+SystemAdmin -> PC ** : create(shortName, longName, ratePerKWh)
+activate PC
+note right: Initialize PowerCompany\nwith basic configuration
+
+SystemAdmin -> PP1 ** : create(plantId, location, buildCost, productionCostPerKWh)
+activate PP1
+note right: Create power generation facility
+
+SystemAdmin -> PC : addPowerPlant(PP1)
+PC -> PC : powerPlants.add(PP1)
+PC --> SystemAdmin : success
+
+SystemAdmin -> SUB1 ** : create(substationId, location, buildCost, maintenanceCost)
+activate SUB1
+note right: Create distribution substation
+
+SystemAdmin -> PP1 : addSubstation(SUB1)
+PP1 -> PP1 : canAddSubstation()
+alt substations.size() < 20
+    PP1 -> SUB1 : checkDistance(PP1.location)
+    SUB1 -> SUB1 : location.isWithinDistance(PP1.location, MAX_PLANT_DISTANCE)
+    alt within distance
+        PP1 -> PP1 : substations.add(SUB1)
+        PP1 --> SystemAdmin : true
+    else too far
+        PP1 --> SystemAdmin : false\n(distance constraint violated)
+    end
+else max substations reached
+    PP1 --> SystemAdmin : false\n(max 20 substations)
+end
+
+SystemAdmin -> TRANS1 ** : create(transformerId, location, installationCost, maintenanceCost)
+activate TRANS1
+note right: Create transformer unit
+
+SystemAdmin -> SUB1 : addTransformer(TRANS1)
+SUB1 -> SUB1 : canAddTransformer()
+alt transformers.size() < 10
+    SUB1 -> TRANS1 : checkDistance(SUB1.location)
+    TRANS1 -> TRANS1 : location.isWithinDistance(SUB1.location, MAX_SUBSTATION_DISTANCE)
+    alt within distance
+        SUB1 -> SUB1 : transformers.add(TRANS1)
+        SUB1 --> SystemAdmin : true
+    else too far
+        SUB1 --> SystemAdmin : false\n(distance constraint violated)
+    end
+else max transformers reached
+    SUB1 --> SystemAdmin : false\n(max 10 transformers)
+end
+
+SystemAdmin -> CUST1 ** : create(accountNumber, name, location, customerType)
+activate CUST1
+note right: Register new customer
+
+SystemAdmin -> TRANS1 : addCustomer(CUST1)
+TRANS1 -> TRANS1 : canAddCustomer()
+alt customers.size() < 5
+    TRANS1 -> CUST1 : checkDistance(TRANS1.location)
+    CUST1 -> CUST1 : location.isWithinDistance(TRANS1.location, MAX_TRANSFORMER_DISTANCE)
+    alt within distance
+        TRANS1 -> TRANS1 : customers.add(CUST1)
+        TRANS1 --> SystemAdmin : true
+    else too far
+        TRANS1 --> SystemAdmin : false\n(distance constraint violated)
+    end
+else max customers reached
+    TRANS1 --> SystemAdmin : false\n(max 5 customers)
+end
+
+SystemAdmin -> PC : addCustomer(CUST1)
+PC -> PC : customers.add(CUST1)
+PC --> SystemAdmin : success
+
+SystemAdmin -> EMP1 ** : create(employeeId, name, startDate, hourlyWage)
+activate EMP1
+note right: Hire employee
+
+SystemAdmin -> PC : addEmployee(EMP1)
+PC -> PC : employees.add(EMP1)
+PC --> SystemAdmin : success
+
+SystemAdmin -> BC ** : create(cycleId, startDate, endDate)
+activate BC
+BC -> BC : status = ACTIVE
+note right: Initialize first billing cycle
+
+== System Running ==
+note over SystemAdmin, BC
+  System is operational
+  Power generation and consumption tracking begins
+end note
+
+== System Shutdown ==
+
+SystemAdmin -> BC : closeCycle()
+BC -> BC : status = CLOSED
+BC --> SystemAdmin : cycle closed
+
+SystemAdmin -> PC : shutdown()
+PC -> PP1 : stop()
+deactivate PP1
+PC -> SUB1 : disconnect()
+deactivate SUB1
+PC -> TRANS1 : disconnect()
+deactivate TRANS1
+PC -> CUST1 : finalizeAccount()
+deactivate CUST1
+PC -> EMP1 : terminate()
+deactivate EMP1
+deactivate BC
+deactivate PC
+
+note over SystemAdmin
+  System shutdown complete
+end note
+
+@enduml
