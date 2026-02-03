@@ -67,29 +67,37 @@ class Billing {
 
 'GridNode & Types
 abstract class GridNode {
-  - id : Integer 
-  - x : Integer
-  - y : Integer
-  - maxDistance : Integer
+  # id : Integer 
+  # x : Integer
+  # y : Integer
+  # maxDistance : Integer
    + distanceTo() 
    ' (other : Location) : Integer
 }
 
 class Customer {
   - accountNumber : String
+  - parentID : Integer
   - name : String
   - isResidential : Boolean
   - costPerKWh : Real
   - powerUsedKWh : Real
- ' - maxDistance : Real
+  - x : Integer
+  - y : Integer
+  - maxDistance : Real
+  - parentID : Integer
    + withinDistance() 
    ' (transformer Transformer) : Bool
+   + distanceTo()
+   ' (other : Location) : Integer
    + calculateBill() 
    ': Real
 }
 
 class PowerPlant {
 '  - plantId : String
+  - powerCompanyID : Integer
+  - childNodeCount : Integer
   - buildCost : Real
   - costPerKWh : Real
   - powerMadeKWh : Real
@@ -99,6 +107,8 @@ class PowerPlant {
 
 class Substation {
 '  - substationId : String
+  - parentID : Integer
+  - childNodeCount : Integer
   - buildCost : Real
   - maintenanceCost : Real
 '  - maxDistance : Real
@@ -110,6 +120,8 @@ class Substation {
 
 class Transformer {
 '  - transformerId : String
+  - parentID : Integer
+  - childNodeCount : Integer
   - buildCost : Real
 '  - maxDistance : Real
    + withinDistance() 
@@ -161,7 +173,7 @@ Employee "0..*" --> "1" EquipmentIssue : assigned to
 EquipmentIssue "1" ..> "1" GridNode : assigned to
 
 ' GridNode Parent
-Customer --|> GridNode
+'Customer --|> GridNode
 PowerPlant --|> GridNode
 Substation --|> GridNode
 Transformer --|> GridNode
