@@ -1,0 +1,171 @@
+@startuml Power Grid Class Diagram
+'!theme plain
+title Group 20 : CS6310 Spring 2026 Assignment 1\nPower Grid Class Diagram
+
+' ALT - D for preview of the diagram
+
+
+/' Reminders and Guidelines
+
+- Max 10 classes
+- Required elements: attribute types, relationship types
+- REMOVE operation parameters and return types
+- Cardinalities required
+
+
+'/
+
+' Display settings for the chart, itself
+'skinparam style strictuml
+skinparam shadowing true
+skinparam roundcorner 15
+skinparam classBackgroundColor white
+'skinparam classBorderColor black
+'skinparam ArrowColor black
+'skinparam LineColor black
+'skinparam defaultFontName "Arial"
+'skinparam linetype ortho
+skinparam dpi 250
+skinparam classAttributeIconSize 0
+
+'skinparam pageWidth 5000
+'skinparam pageHeight 5000
+skinparam pageSize A0
+
+'hide methods
+
+class PowerCompany {
+  - longName : String
+  - shortName : String
+  - standardRate : Real
+   + changePowerPlantOwner() 
+   '(plant : PowerPlant, newOwner : PowerCompany)
+   + processBillingCycle() 
+   ' : Real
+   + logEquipmentIssue() 
+   ' (issue : EquipmentIssue) : void
+}
+
+class Billing {
+  - billCycle: String
+  - startDate : Date
+  - endDate : Date
+'  - revenue : Real
+   - getCustomerBill() 
+   ' : Real
+   - getMaintenanceCost() 
+   ' : Real
+   - tallyRepairCosts() 
+   ' : Real
+   - calculateTotalCost() 
+   ' : Real
+   + processBillingCycle() 
+   ' : Real
+   + getRevenue() 
+   ' : Real
+}
+
+'PowerNode & Types
+abstract class PowerNode {
+  - id : Integer 
+  - x : Integer
+  - y : Integer
+  - maxDistance : Integer
+   + distanceTo() 
+   ' (other : Location) : Integer
+}
+
+class Customer {
+  - accountNumber : String
+  - name : String
+  - isResidential : Boolean
+  - costPerKWh : Real
+  - powerUsedKWh : Real
+ ' - maxDistance : Real
+   + withinDistance() 
+   ' (transformer Transformer) : Bool
+   + calculateBill() 
+   ': Real
+}
+
+class PowerPlant {
+'  - plantId : String
+  - buildCost : Real
+  - costPerKWh : Real
+  - powerMadeKWh : Real
+   + powerCost() 
+   ' : Real
+}
+
+class Substation {
+'  - substationId : String
+  - buildCost : Real
+  - maintenanceCost : Real
+'  - maxDistance : Real
+   + withinDistance() 
+   ' (powerPlant PowerPlant) : Bool
+   + getMaintenanceCost() 
+   ' : Real
+}
+
+class Transformer {
+'  - transformerId : String
+  - buildCost : Real
+'  - maxDistance : Real
+   + withinDistance() 
+   '(substation Substation) : Bool
+   + getMaintenanceCost() 
+   ': Real
+}
+
+'EquipmentIssue & Employee
+class Employee {
+  - employeeId : String
+  - name : String
+  - startDate : Date
+  - hourlyWage : Real
+   + assignToIssue() 
+   ' (issue : EquipmentIssue) : void
+}
+
+class EquipmentIssue {
+  - hoursRequired : Integer
+  - materialCost : Real
+   + calculateRepairCost() 
+   ' (wage : Real) : Real
+}
+
+
+' PowerCompany basic relationsihps
+PowerCompany "1" --> "0..*" Customer : serves
+PowerCompany "1" *-- "0..*" PowerPlant : owns
+PowerCompany "1" --> "0..*" Employee : employs
+PowerCompany "1" --> "0..*" EquipmentIssue : issues
+PowerCompany "1" *-- "1" Billing : composed of
+
+' Billing relationships
+'Billing "1" o-- "1" PowerCompany
+Billing "1" --> "0..*" Customer : charges to
+'Billing "1" o-- "0..*" PowerPlant
+'Billing "1" o-- "0..*" Substation
+'Billing "1" o-- "0..*" Transformer
+'Billing "1" o-- "0..*" EquipmentIssue
+
+' Power chain from PowerPlant to Customer
+PowerPlant "1" *-- "0..20" Substation : supplies to
+Substation "1" *-- "0..10" Transformer : supplies to
+Transformer "1" --> "0..5" Customer : supplies to
+
+' Equipment
+Employee "0..*" --> "1" EquipmentIssue : assigned to
+EquipmentIssue "1" ..> "1" PowerNode : assigned to
+
+' PowerNode Parent
+Customer --|> PowerNode
+PowerPlant --|> PowerNode
+Substation --|> PowerNode
+Transformer --|> PowerNode
+
+
+
+@enduml
