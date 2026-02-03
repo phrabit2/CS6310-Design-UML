@@ -65,8 +65,8 @@ class Billing {
    ' : Real
 }
 
-'PowerNode & Types
-abstract class PowerNode {
+'GridNode & Types
+abstract class GridNode {
   - id : Integer 
   - x : Integer
   - y : Integer
@@ -158,13 +158,13 @@ Transformer "1" --> "0..5" Customer : supplies to
 
 ' Equipment
 Employee "0..*" --> "1" EquipmentIssue : assigned to
-EquipmentIssue "1" ..> "1" PowerNode : assigned to
+EquipmentIssue "1" ..> "1" GridNode : assigned to
 
-' PowerNode Parent
-Customer --|> PowerNode
-PowerPlant --|> PowerNode
-Substation --|> PowerNode
-Transformer --|> PowerNode
+' GridNode Parent
+Customer --|> GridNode
+PowerPlant --|> GridNode
+Substation --|> GridNode
+Transformer --|> GridNode
 
 
 
