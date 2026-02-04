@@ -38,8 +38,6 @@ class PowerCompany {
   - longName : String
   - shortName : String
   - standardRate : Real
-   + changePowerPlantOwner() 
-   '(plant : PowerPlant, newOwner : PowerCompany)
    + processBillingCycle() 
    ' : Real
    + logEquipmentIssue() 
@@ -77,11 +75,11 @@ abstract class GridNode {
 
 class Customer {
   - accountNumber : String
-  - parentID : Integer
   - name : String
   - isResidential : Boolean
   - costPerKWh : Real
   - powerUsedKWh : Real
+  - parentID : Integer
   - x : Integer
   - y : Integer
   - maxDistance : Real
@@ -96,7 +94,6 @@ class Customer {
 
 class PowerPlant {
 '  - plantId : String
-  - powerCompanyID : Integer
   - childNodeCount : Integer
   - buildCost : Real
   - costPerKWh : Real
