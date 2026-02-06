@@ -1,0 +1,184 @@
+@startuml Power Grid Class Diagram
+title Group 20 : CS6310 Spring 2026 Assignment 1\nPower Grid Class Diagram
+
+/' Reminders and Guidelines
+
+- Max 10 classes (excluding enums/interfaces)
+- Required elements: attribute types, relationship types
+- REMOVE operation parameters and return types (commented out)
+- Cardinalities required
+- Use basic/primitive data types only
+- Default private/public symbols with black text on white background
+
+'/
+
+' Display settings
+skinparam shadowing true
+skinparam roundcorner 15
+skinparam classBackgroundColor white
+skinparam dpi 250
+skinparam classAttributeIconSize 0
+skinparam pageSize A0
+
+
+' ===== CLASSES =====
+
+class PowerCompany {
+  - longName : String
+  - shortName : String
+  - standardRate : Real
+  - totalCosts : Real
+  - totalRevenue : Real
+   + processBillingCycle()
+   ' : Real
+   + logEquipmentIssue()
+   ' (issue : EquipmentIssue) : void
+   + getTotalCosts()
+   ' : Real
+   + getTotalRevenue()
+   ' : Real
+}
+
+class Billing {
+  - billCycle : String
+  - startDate : Date
+  - endDate : Date
+   - getCustomerBill()
+   ' : Real
+   - getMaintenanceCost()
+   ' : Real
+   - tallyRepairCosts()
+   ' : Real
+   - calculateTotalCost()
+   ' : Real
+   + processBillingCycle()
+   ' : Real
+   + getRevenue()
+   ' : Real
+}
+
+' ===== GridNode (abstract) & Subclasses =====
+
+abstract class GridNode {
+  # id : Integer
+  # x : Integer
+  # y : Integer
+  # maxDistance : Integer
+  # parentID : Integer
+  # childNodeCount : Integer
+   + {abstract} getCost()
+   ' : Real
+   + {abstract} withinDistance()
+   ' (other : GridNode) : Boolean
+   + distanceTo()
+   ' (other : GridNode) : Integer
+}
+
+class PowerPlant {
+  - buildCost : Real
+  - costPerKWh : Real
+  - powerMadeKWh : Real
+   + getCost()
+   ' : Real
+   + withinDistance()
+   ' (substation : Substation) : Boolean
+   + addSubstation()
+   ' (substation : Substation) : void
+   + removeSubstation()
+   ' (substationId : Integer) : void
+}
+
+class Substation {
+  - buildCost : Real
+  - maintenanceCost : Real
+   + getCost()
+   ' : Real
+   + withinDistance()
+   ' (powerPlant : PowerPlant) : Boolean
+   + addTransformer()
+   ' (transformer : Transformer) : void
+   + removeTransformer()
+   ' (transformerId : Integer) : void
+}
+
+class Transformer {
+  - buildCost : Real
+  - maintenanceCost : Real
+   + getCost()
+   ' : Real
+   + withinDistance()
+   ' (substation : Substation) : Boolean
+   + addCustomer()
+   ' (customer : Customer) : void
+   + removeCustomer()
+   ' (accountNumber : String) : void
+}
+
+' ===== Customer (separate, not inheriting GridNode) =====
+
+class Customer {
+  - accountNumber : String
+  - name : String
+  - isResidential : Boolean
+  - costPerKWh : Real
+  - powerUsedKWh : Real
+  - x : Integer
+  - y : Integer
+  - maxDistance : Integer
+   + distanceFrom()
+   ' (other : GridNode) : Integer
+   + calculateBill()
+   ' : Real
+}
+
+' ===== Employee & EquipmentIssue =====
+
+class Employee {
+  - employeeId : String
+  - name : String
+  - startDate : Date
+  - hourlyWage : Real
+   + assignToIssue()
+   ' (issue : EquipmentIssue) : void
+}
+
+class EquipmentIssue {
+  - hoursRequired : Integer
+  - materialCost : Real
+   + calculateRepairCost()
+   ' (wage : Real) : Real
+}
+
+
+' ===== RELATIONSHIPS =====
+
+' PowerCompany relationships
+PowerCompany "1" *-- "0..*" PowerPlant : owns
+PowerCompany "1" --> "0..*" Customer : serves
+PowerCompany "1" --> "0..*" Employee : employs
+PowerCompany "1" --> "0..*" EquipmentIssue : issues
+PowerCompany "1" *-- "1" Billing : composed of
+
+' Power chain (composition)
+PowerPlant "1" *-- "0..20" Substation : supplies to
+Substation "1" *-- "0..10" Transformer : supplies to
+Transformer "1" --> "0..5" Customer : supplies to
+
+' Employee & EquipmentIssue
+Employee "0..*" --> "1" EquipmentIssue : assigned to
+EquipmentIssue "1" ..> "1" GridNode : assigned to
+
+' GridNode inheritance
+PowerPlant --|> GridNode
+Substation --|> GridNode
+Transformer --|> GridNode
+
+' Billing associations (all classes)
+Billing "1" --> "0..*" Customer : charges to
+Billing "1" --> "0..*" PowerPlant : costs from
+Billing "1" --> "0..*" Substation : costs from
+Billing "1" --> "0..*" Transformer : costs from
+Billing "1" --> "0..*" EquipmentIssue : costs from
+
+
+@enduml
