@@ -9,6 +9,9 @@ title Group 20 : CS6310 Spring 2026 Assignment 1\nPower Grid Class Diagram
 - Cardinalities required
 - Use basic/primitive data types only
 - Default private/public symbols with black text on white background
+- Avoid curved line
+- Avoid crossing lines
+
 
 '/
 
@@ -19,6 +22,10 @@ skinparam classBackgroundColor white
 skinparam dpi 250
 skinparam classAttributeIconSize 0
 skinparam pageSize A0
+skinparam linetype ortho
+
+skinparam nodesep 60
+skinparam ranksep 60
 
 
 ' ===== CLASSES =====
@@ -39,7 +46,7 @@ class PowerCompany {
    ' : Real
 }
 
-class Billing {
+class BillingDepartment {
   - billCycle : String
   - startDate : Date
   - endDate : Date
@@ -78,10 +85,6 @@ class PowerPlant {
   - buildCost : Real
   - costPerKWh : Real
   - powerMadeKWh : Real
-   + getCost()
-   ' : Real
-   + withinDistance()
-   ' (substation : Substation) : Boolean
    + addSubstation()
    ' (substation : Substation) : void
    + removeSubstation()
@@ -91,10 +94,6 @@ class PowerPlant {
 class Substation {
   - buildCost : Real
   - maintenanceCost : Real
-   + getCost()
-   ' : Real
-   + withinDistance()
-   ' (powerPlant : PowerPlant) : Boolean
    + addTransformer()
    ' (transformer : Transformer) : void
    + removeTransformer()
@@ -104,10 +103,6 @@ class Substation {
 class Transformer {
   - buildCost : Real
   - maintenanceCost : Real
-   + getCost()
-   ' : Real
-   + withinDistance()
-   ' (substation : Substation) : Boolean
    + addCustomer()
    ' (customer : Customer) : void
    + removeCustomer()
@@ -153,32 +148,30 @@ class EquipmentIssue {
 ' ===== RELATIONSHIPS =====
 
 ' PowerCompany relationships
-PowerCompany "1" *-- "0..*" PowerPlant : owns
-PowerCompany "1" --> "0..*" Customer : serves
+PowerCompany "1" *-right- "0..*" PowerPlant : owns
+PowerCompany "1" -left-> "0..*" Customer : serves
 PowerCompany "1" --> "0..*" Employee : employs
 PowerCompany "1" --> "0..*" EquipmentIssue : issues
-PowerCompany "1" *-- "1" Billing : composed of
+PowerCompany "1" *-- "1" BillingDepartment : composed of
 
 ' Power chain (composition)
-PowerPlant "1" *-- "0..20" Substation : supplies to
-Substation "1" *-- "0..10" Transformer : supplies to
-Transformer "1" --> "0..5" Customer : supplies to
+PowerPlant "1" *-down- "0..20" Substation : supplies to
+Substation "1" *-down- "0..10" Transformer : supplies to
+Transformer "1" -down-> "0..5" Customer : supplies to
 
 ' Employee & EquipmentIssue
 Employee "0..*" --> "1" EquipmentIssue : assigned to
 EquipmentIssue "1" ..> "1" GridNode : assigned to
 
 ' GridNode inheritance
-PowerPlant --|> GridNode
-Substation --|> GridNode
-Transformer --|> GridNode
+PowerPlant -right-|> GridNode
+Substation -right-|> GridNode
+Transformer -right-|> GridNode
 
-' Billing associations (all classes)
-Billing "1" --> "0..*" Customer : charges to
-Billing "1" --> "0..*" PowerPlant : costs from
-Billing "1" --> "0..*" Substation : costs from
-Billing "1" --> "0..*" Transformer : costs from
-Billing "1" --> "0..*" EquipmentIssue : costs from
+' BillingDepartment associations (all classes)
+BillingDepartment "1" --> "0..*" Customer : charges to
+BillingDepartment "1" --> "0..*" GridNode : costs from
+BillingDepartment "1" -right-> "0..*" EquipmentIssue : costs from
 
 
 @enduml
