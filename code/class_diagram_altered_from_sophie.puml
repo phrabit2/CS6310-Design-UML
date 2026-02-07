@@ -36,16 +36,12 @@ class PowerCompany {
   - totalCosts : Real
   - totalRevenue : Real
   - currentBillingCycle : Integer
-  - billingStartDate : Date
-  - billingEndDate : Date
-  + processBillingCycle()
+  - currentBillingStartDate : Date
+  - currentBillingEndDate : Date
+  + updateBillingCycle()
   ' : void
   + createBills()
   ' : void
-  + getTotalRevenue()
-  ' : Real
-  + getTotalCosts()
-  ' : Real
   + createEquipmentIssue()
   ' (issue : EquipmentIssue) : void
   + assignIssue()
@@ -56,12 +52,17 @@ class PowerCompany {
   ' : Real
   + getTotalDemand()
   ' : Real
+  + payEmployee()
+  ' (employeeId: string) : void
 }
 
+' TODO: add inner class Billing
 class Bill {
   - billId : String
   - accountNumber : String
   - billingCycle : Integer
+  - billingStartDate: Date
+  - billingEndDate: Date
   - issueDate : Date
   - dueDate : Date
   - usageKWh : Real
@@ -104,8 +105,13 @@ abstract class GridNode {
   # buildCost : Real
   # maintenanceCost : Real
   # currentDemand: Real
+  # issueIds: List<String>
   + {abstract} getDemands()
   ' : Real
+  + {abstract} addChild()
+  ' (childId: String) : void
+  + {abstract} removeChild()
+  ' (childId: String) : void
   + {abstract} supply()
   ' (demands: Real) : void
   + {abstract} getCost()
@@ -120,32 +126,14 @@ abstract class GridNode {
 
 class PowerPlant {
   - powerMade : Real
-  + getDemands()
-  ' : Real
   + checkCapacity()
   ' : Boolean
-  + addSubstation()
-  ' (substation : Substation) : void
-  + removeSubstation()
-  ' (substationId : Integer) : void
 }
 
 class Substation {
-  + getDemands()
-  ' : Real
-  + addTransformer()
-  ' (transformer : Transformer) : void
-  + removeTransformer()
-  ' (transformerId : Integer) : void
 }
 
 class Transformer {
-  + getDemands()
-  ' : Real
-  + addCustomer()
-  ' (customer : Customer) : void
-  + removeCustomer()
-  ' (accountNumber : String) : void
 }
 
 ' ===== Customer (separate, not inheriting GridNode) =====
@@ -153,7 +141,7 @@ class Transformer {
 class Customer {
   - accountNumber : String
   - name : String
-  - type : String
+  - isResidential : Boolean
   - powerDemand : Real
   - powerUsedKWh : Real
   - x : Integer
@@ -176,7 +164,10 @@ class Employee {
   - name : String
   - startDate : Date
   - hourlyWage : Real
-  - assignedIssueId: String
+  - workingHours : Integer
+  - hoursPaid : Integer
+  - assignedIssueIds: List<String>
+  - isAvailabile: Boolean
 }
 
 class EquipmentIssue {
@@ -186,8 +177,11 @@ class EquipmentIssue {
   - hoursRequired : Integer
   - materialCost : Real
   - isResolved : Boolean
+  - assignedEmployeeIds: List<String>
   + getTotalCosts()
   ' () : Real
+  + reportResolveIssue()
+  ' (issueId) : void
 }
 
 
@@ -202,7 +196,7 @@ PowerCompany "1" --> "0..*" Bill : generates
 
 ' Bill and Transaction relationships
 Bill "1" --> "1" Customer : generated to
-Customer "1" --> "1" Bill : receives
+Customer "1" --> "0..*" Bill : receives
 Bill "1" --> "0..*" Transaction : paid by
 Transaction "1" --> "1" Bill : pays for
 Customer "1" --> "0..*" Transaction : makes
@@ -213,8 +207,8 @@ Substation "1" o-down- "0..10" Transformer : supplies to
 Transformer "1" -down-> "0..5" Customer : supplies to
 
 ' Employee & EquipmentIssue
-Employee "0..*" --> "1" EquipmentIssue : assigned to
-EquipmentIssue "1" --> "1" GridNode : reported from
+Employee "0..*" --> "0..*" EquipmentIssue : assigned to
+EquipmentIssue "0..*" --> "1" GridNode : reported from
 
 ' GridNode inheritance
 PowerPlant -right-|> GridNode
