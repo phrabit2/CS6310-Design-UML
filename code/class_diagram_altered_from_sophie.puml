@@ -101,6 +101,9 @@ abstract class GridNode {
   # parentId : Integer
   # childNodeIds : List<String>
   # powerDemand : Real
+  # buildCost : Real
+  # maintenanceCost : Real
+  # currentDemand: Real
   + {abstract} getDemands()
   ' : Real
   + {abstract} supply()
@@ -116,10 +119,7 @@ abstract class GridNode {
 }
 
 class PowerPlant {
-  - buildCost : Real
-  - costPerKWh : Real
-  - powerMadeKWh : Real
-  - currentDemandKWh : Real
+  - powerMade : Real
   + getDemands()
   ' : Real
   + checkCapacity()
@@ -131,9 +131,6 @@ class PowerPlant {
 }
 
 class Substation {
-  - buildCost : Real
-  - maintenanceCost : Real
-  - currentDemandKWh : Real
   + getDemands()
   ' : Real
   + addTransformer()
@@ -143,9 +140,6 @@ class Substation {
 }
 
 class Transformer {
-  - buildCost : Real
-  - maintenanceCost : Real
-  - currentDemandKWh : Real
   + getDemands()
   ' : Real
   + addCustomer()
@@ -159,7 +153,7 @@ class Transformer {
 class Customer {
   - accountNumber : String
   - name : String
-  - isResidential : Boolean
+  - type : String
   - powerDemand : Real
   - powerUsedKWh : Real
   - x : Integer
