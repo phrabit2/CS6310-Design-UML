@@ -1,0 +1,236 @@
+@startuml Power Grid Class Diagram
+title Group 20 : CS6310 Spring 2026 Assignment 1\nPower Grid Class Diagram
+
+/' Reminders and Guidelines
+
+- Max 10 classes (excluding enums/interfaces)
+- Required elements: attribute types, relationship types
+- REMOVE operation parameters and return types (commented out)
+- Cardinalities required
+- Use basic/primitive data types only
+- Default private/public symbols with black text on white background
+- Avoid curved line
+- Avoid crossing lines
+
+'/
+
+' Display settings
+skinparam shadowing true
+skinparam roundcorner 15
+skinparam classBackgroundColor white
+skinparam dpi 250
+skinparam classAttributeIconSize 0
+skinparam pageSize A0
+skinparam linetype ortho
+
+skinparam nodesep 60
+skinparam ranksep 60
+
+
+' ===== CLASSES =====
+
+class PowerCompany {
+  ' ===== Attributes =====
+  - longName : String
+  - shortName : String
+  - standardRate : Real
+  - totalCosts : Real
+  - totalRevenue : Real
+  - currentBillingCycle : Integer
+  - currentBillingStartDate : Date
+  - currentBillingEndDate : Date
+  ' ===== Operations =====
+  + updateBillingCycle()
+  ' : void
+  + createBills()
+  ' : void
+  + createEquipmentIssue()
+  ' (issue : EquipmentIssue) : void
+  + assignIssue()
+  ' (issueId: string, employeeId: string): void
+  + getTotalCosts()
+  ' : Real
+  + getTotalRevenue()
+  ' : Real
+  + getTotalDemand()
+  ' : Real
+  + payEmployee()
+  ' (employeeId: string) : void
+}
+
+' TODO: add inner class Billing
+class Bill {
+  ' ===== Attributes =====
+  - billId : String
+  - accountNumber : String
+  - billingCycle : Integer
+  - billingStartDate: Date
+  - billingEndDate: Date
+  - issueDate : Date
+  - dueDate : Date
+  - usageKWh : Real
+  - standardRate : Real
+  - amountDue : Real
+  - amountPaid : Real
+  - status : String
+  ' ===== Operations =====
+  + getAmountToBePaid()
+  ' : Real
+  + processPayment()
+  ' (amount : Real) : void
+  + getRemainingBalance()
+  ' : Real
+  + isFullyPaid()
+  ' : Boolean
+  + isOverdue()
+  ' : Boolean
+}
+
+class Transaction {
+  ' ===== Attributes =====
+  - transactionId : String
+  - billId : String
+  - paymentDate : Date
+  - amountPaid : Real
+  - paymentMethod : String
+  ' ===== Operations =====
+  + recordPayment()
+  ' : void
+}
+
+' ===== Customer (separate, not inheriting GridNode) =====
+
+class Customer {
+  ' ===== Attributes =====
+  - accountNumber : String
+  - name : String
+  - isResidential : Boolean
+  - powerDemand : Real
+  - powerUsedKWh : Real
+  - x : Integer
+  - y : Integer
+  - maxDistance : Integer
+  ' ===== Operations =====
+  + distanceFrom()
+  ' (other : GridNode) : Integer
+  + recordUsage()
+  ' (kWh : Real) : void
+  + payBill()
+  ' (billId : String, amount : Real) : void
+  + getBill()
+  ' (accountNumber: String) : Bill
+}
+
+' ===== GridNode (abstract) & Subclasses =====
+
+abstract class GridNode {
+  ' ===== Attributes =====
+  # x : Integer
+  # y : Integer
+  # maxDistance : Integer 
+  ' {distance limit to connect to child level}
+  # initialCost : Real
+  ' === ??? ===
+  # powerDemand : Real
+  # currentDemand: Real
+  ' ===== Operations =====
+  + distanceTo()
+  ' (childNode : GridNode) : Integer
+  + withinDistance()
+  ' (childNode : GridNode) : Boolean
+  + reportIssue()
+  ' (description : String) : EquipmentIssue
+  + {abstract} addChild() 
+  ' (childId: String) : void'
+  + {abstract} removeChild() 
+  ' (childId: String) : void
+  + {abstract} getCostThisCycle() 
+  ' : Real
+  + {abstract} checkCapacity()
+  ' : Boolean
+  ' === ??? ===
+  + {abstract} supply() 
+  ' (demands: Real) : void
+  + {abstract} getDemands() 
+  ' : Real
+}
+
+class PowerPlant {
+  ' ===== Attributes =====
+  - plantId: String
+  - powerProducedThisCycle : Real
+  + addPowerProducedThisCycle()
+  '(kwh: Integer) : void'
+}
+
+class Substation {
+  ' ===== Attributes =====
+  - substationId: String
+  - maintenanceCostPerCycle: Real
+}
+
+class Transformer {
+  ' ===== Attributes =====
+  - transformerId: String
+  - maintenanceCostPerCycle: Real
+}
+
+' ===== Employee & EquipmentIssue =====
+
+class Employee {
+  ' ===== Attributes =====
+  - employeeId : String
+  - name : String
+  - startDate : Date
+  - hourlyWage : Real
+  - workingHours : Integer
+  - hoursPaid : Integer
+  - isAvailable: Boolean
+}
+
+class EquipmentIssue {
+  ' ===== Attributes =====
+  - issueId : String
+  - description : String
+  - reportDate : Date
+  - hoursRequired : Integer
+  - materialCost : Real
+  - isResolved : Boolean
+  ' ===== Operations =====
+  + getTotalCosts()
+  ' () : Real
+  + reportResolveIssue()
+  ' (issueId) : void
+}
+
+' ===== RELATIONSHIPS =====
+
+' PowerCompany relationships
+PowerCompany "1" o-right- "0..*" PowerPlant : owns
+PowerCompany "1" -left-> "0..*" Customer : serves
+PowerCompany "1" --> "0..*" Employee : employs
+PowerCompany "1" --> "0..*" EquipmentIssue : tracks
+PowerCompany "1" --> "0..*" Bill : generates
+
+' Bill and Transaction relationships
+Bill "1" --> "1" Customer : generated to
+Customer "1" --> "0..*" Bill : receives
+Bill "1" --> "0..*" Transaction : paid by
+Transaction "1" --> "1" Bill : pays for
+Customer "1" --> "0..*" Transaction : makes
+
+' Employee & EquipmentIssue
+Employee "1" --> "0..*" EquipmentIssue : assigned to
+EquipmentIssue "0..*" --> "1" GridNode : reported from
+
+' GridNode inheritance
+PowerPlant -right-|> GridNode
+Substation -right-|> GridNode
+Transformer -right-|> GridNode
+
+' Power chain
+PowerPlant "1" o-down- "0..20" Substation : supplies to
+Substation "1" o-down- "0..10" Transformer : supplies to
+Transformer "1" -down-> "0..5" Customer : supplies to
+
+@enduml
