@@ -1,0 +1,433 @@
+@startuml System Initialization and Shutdown
+
+title Group 20 : CS6310 Spring 2026 Assignment 1\nSequence Diagram 1 — System Initialization and Shutdown\n<<Starting the system – creating the objects to be used - and system stop>>
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam dpi 250
+
+' ===== Participants =====
+actor "System" as SYS
+
+participant "pc : PowerCompany" as PC
+participant "pp1 : PowerPlant" as PP1
+participant "sub1 : Substation" as SUB1
+participant "sub2 : Substation" as SUB2
+participant "t1 : Transformer" as T1
+participant "t2 : Transformer" as T2
+participant "t3 : Transformer" as T3
+participant "c1 : Customer" as C1
+participant "c2 : Customer" as C2
+participant "c3 : Customer" as C3
+participant "c4 : Customer" as C4
+participant "c5 : Customer" as C5
+participant "e1 : Employee" as E1
+participant "e2 : Employee" as E2
+
+' ============================
+' PHASE 1: PowerCompany
+' ============================
+== Phase 1 : PowerCompany Initialization ==
+
+create PC
+SYS -> PC : <<create>> PowerCompany("fpl", "Florida Power & Light", 0.12)
+activate PC
+note right of PC
+  longName = "Florida Power & Light"
+  shortName = "fpl"
+  standardRate = 0.12
+  currentBillingCycle = 0
+  totalCosts = 0.0
+  totalRevenue = 0.0
+end note
+PC --> SYS
+deactivate PC
+
+' ============================
+' PHASE 2: PowerPlant
+' ============================
+== Phase 2 : PowerPlant Creation ==
+
+create PP1
+SYS -> PP1 : <<create>> PowerPlant("PP-001", x=10, y=10, maxDistance=50)
+activate PP1
+note right of PP1 : powerProducedThisCycle = 0.0
+PP1 --> SYS
+deactivate PP1
+
+note over PC, PP1 : PowerCompany "owns" PowerPlant [aggregation 1..0..*]
+
+' ============================
+' PHASE 3: Substations
+' ============================
+== Phase 3 : Substation Creation & Connection to PowerPlant ==
+
+' --- SUB1 ---
+create SUB1
+SYS -> SUB1 : <<create>> Substation("SUB-001", x=20, y=15, maxDistance=30, maintenanceCostPerCycle=500.0)
+activate SUB1
+SUB1 --> SYS
+deactivate SUB1
+
+SYS -> PP1 : checkCapacity()
+activate PP1
+note right of PP1 : substations.size() < 20 ?
+PP1 --> SYS : true
+deactivate PP1
+
+SYS -> PP1 : withinDistance(sub1)
+activate PP1
+PP1 -> PP1 : distanceTo(sub1)
+note right of PP1 : Manhattan distance check
+PP1 --> SYS : true
+deactivate PP1
+
+SYS -> PP1 : addChild("SUB-001")
+activate PP1
+PP1 --> SYS
+deactivate PP1
+
+' --- SUB2 ---
+create SUB2
+SYS -> SUB2 : <<create>> Substation("SUB-002", x=35, y=20, maxDistance=25, maintenanceCostPerCycle=450.0)
+activate SUB2
+SUB2 --> SYS
+deactivate SUB2
+
+SYS -> PP1 : checkCapacity()
+activate PP1
+PP1 --> SYS : true
+deactivate PP1
+
+SYS -> PP1 : withinDistance(sub2)
+activate PP1
+PP1 -> PP1 : distanceTo(sub2)
+PP1 --> SYS : true
+deactivate PP1
+
+SYS -> PP1 : addChild("SUB-002")
+activate PP1
+PP1 --> SYS
+deactivate PP1
+
+' ============================
+' PHASE 4: Transformers
+' ============================
+== Phase 4 : Transformer Creation & Connection to Substations ==
+
+' --- T1 → SUB1 ---
+create T1
+SYS -> T1 : <<create>> Transformer("T-001", x=25, y=18, maxDistance=10, maintenanceCostPerCycle=200.0)
+activate T1
+T1 --> SYS
+deactivate T1
+
+SYS -> SUB1 : checkCapacity()
+activate SUB1
+note right of SUB1 : transformers.size() < 10 ?
+SUB1 --> SYS : true
+deactivate SUB1
+
+SYS -> SUB1 : withinDistance(t1)
+activate SUB1
+SUB1 -> SUB1 : distanceTo(t1)
+SUB1 --> SYS : true
+deactivate SUB1
+
+SYS -> SUB1 : addChild("T-001")
+activate SUB1
+SUB1 --> SYS
+deactivate SUB1
+
+' --- T2 → SUB1 ---
+create T2
+SYS -> T2 : <<create>> Transformer("T-002", x=22, y=12, maxDistance=10, maintenanceCostPerCycle=200.0)
+activate T2
+T2 --> SYS
+deactivate T2
+
+SYS -> SUB1 : checkCapacity()
+activate SUB1
+SUB1 --> SYS : true
+deactivate SUB1
+
+SYS -> SUB1 : withinDistance(t2)
+activate SUB1
+SUB1 -> SUB1 : distanceTo(t2)
+SUB1 --> SYS : true
+deactivate SUB1
+
+SYS -> SUB1 : addChild("T-002")
+activate SUB1
+SUB1 --> SYS
+deactivate SUB1
+
+' --- T3 → SUB2 ---
+create T3
+SYS -> T3 : <<create>> Transformer("T-003", x=38, y=23, maxDistance=10, maintenanceCostPerCycle=200.0)
+activate T3
+T3 --> SYS
+deactivate T3
+
+SYS -> SUB2 : checkCapacity()
+activate SUB2
+note right of SUB2 : transformers.size() < 10 ?
+SUB2 --> SYS : true
+deactivate SUB2
+
+SYS -> SUB2 : withinDistance(t3)
+activate SUB2
+SUB2 -> SUB2 : distanceTo(t3)
+SUB2 --> SYS : true
+deactivate SUB2
+
+SYS -> SUB2 : addChild("T-003")
+activate SUB2
+SUB2 --> SYS
+deactivate SUB2
+
+' ============================
+' PHASE 5: Customers
+' ============================
+== Phase 5 : Customer Registration & Connection to Transformers ==
+
+' --- C1, C2 → T1 ---
+create C1
+SYS -> C1 : <<create>> Customer("ACCT-001", "Alice", isResidential=true, powerDemand=5.0, x=27, y=19, maxDistance=10)
+activate C1
+C1 --> SYS
+deactivate C1
+
+SYS -> T1 : checkCapacity()
+activate T1
+note right of T1 : customers.size() < 5 ?
+T1 --> SYS : true
+deactivate T1
+
+SYS -> C1 : distanceFrom(t1)
+activate C1
+note right of C1 : Manhattan distance to Transformer
+C1 --> SYS : 3 (within maxDistance)
+deactivate C1
+
+SYS -> T1 : addChild("ACCT-001")
+activate T1
+T1 --> SYS
+deactivate T1
+
+create C2
+SYS -> C2 : <<create>> Customer("ACCT-002", "Bob", isResidential=true, powerDemand=4.0, x=26, y=17, maxDistance=10)
+activate C2
+C2 --> SYS
+deactivate C2
+
+SYS -> T1 : checkCapacity()
+activate T1
+T1 --> SYS : true
+deactivate T1
+
+SYS -> C2 : distanceFrom(t1)
+activate C2
+C2 --> SYS : 2 (within maxDistance)
+deactivate C2
+
+SYS -> T1 : addChild("ACCT-002")
+activate T1
+T1 --> SYS
+deactivate T1
+
+' --- C3, C4 → T2 ---
+create C3
+SYS -> C3 : <<create>> Customer("ACCT-003", "Carol", isResidential=false, powerDemand=15.0, x=23, y=13, maxDistance=10)
+activate C3
+C3 --> SYS
+deactivate C3
+
+SYS -> T2 : checkCapacity()
+activate T2
+T2 --> SYS : true
+deactivate T2
+
+SYS -> C3 : distanceFrom(t2)
+activate C3
+C3 --> SYS : 2 (within maxDistance)
+deactivate C3
+
+SYS -> T2 : addChild("ACCT-003")
+activate T2
+T2 --> SYS
+deactivate T2
+
+create C4
+SYS -> C4 : <<create>> Customer("ACCT-004", "David", isResidential=true, powerDemand=6.0, x=21, y=11, maxDistance=10)
+activate C4
+C4 --> SYS
+deactivate C4
+
+SYS -> T2 : checkCapacity()
+activate T2
+T2 --> SYS : true
+deactivate T2
+
+SYS -> C4 : distanceFrom(t2)
+activate C4
+C4 --> SYS : 2 (within maxDistance)
+deactivate C4
+
+SYS -> T2 : addChild("ACCT-004")
+activate T2
+T2 --> SYS
+deactivate T2
+
+' --- C5 → T3 ---
+create C5
+SYS -> C5 : <<create>> Customer("ACCT-005", "Eve", isResidential=true, powerDemand=5.0, x=39, y=24, maxDistance=10)
+activate C5
+C5 --> SYS
+deactivate C5
+
+SYS -> T3 : checkCapacity()
+activate T3
+T3 --> SYS : true
+deactivate T3
+
+SYS -> C5 : distanceFrom(t3)
+activate C5
+C5 --> SYS : 2 (within maxDistance)
+deactivate C5
+
+SYS -> T3 : addChild("ACCT-005")
+activate T3
+T3 --> SYS
+deactivate T3
+
+note over PC, C5
+  Customer-Transformer Assignments:
+  T1 ← C1 (Alice), C2 (Bob)
+  T2 ← C3 (Carol), C4 (David)
+  T3 ← C5 (Eve)
+end note
+
+' ============================
+' PHASE 6: Employees
+' ============================
+== Phase 6 : Employee Hiring ==
+
+create E1
+SYS -> E1 : <<create>> Employee("EMP-001", "Frank", startDate=2026-01-01, hourlyWage=35.0, workingHours=0, isAvailable=true)
+activate E1
+E1 --> SYS
+deactivate E1
+
+create E2
+SYS -> E2 : <<create>> Employee("EMP-002", "Grace", startDate=2026-01-15, hourlyWage=40.0, workingHours=0, isAvailable=true)
+activate E2
+E2 --> SYS
+deactivate E2
+
+note over PC, E2
+  PowerCompany "employs" Employee [1..0..*]
+  Both employees available for dispatch
+end note
+
+' ============================
+' PHASE 7: Verification
+' ============================
+== Phase 7 : System Verification ==
+
+SYS -> PC : getTotalDemand()
+activate PC
+
+PC -> PP1 : getDemands()
+activate PP1
+
+PP1 -> SUB1 : getDemands()
+activate SUB1
+
+SUB1 -> T1 : getDemands()
+activate T1
+note right of T1 : sum(C1.powerDemand + C2.powerDemand) = 9.0
+T1 --> SUB1 : 9.0
+deactivate T1
+
+SUB1 -> T2 : getDemands()
+activate T2
+note right of T2 : sum(C3.powerDemand + C4.powerDemand) = 21.0
+T2 --> SUB1 : 21.0
+deactivate T2
+
+SUB1 --> PP1 : 30.0
+deactivate SUB1
+
+PP1 -> SUB2 : getDemands()
+activate SUB2
+
+SUB2 -> T3 : getDemands()
+activate T3
+note right of T3 : sum(C5.powerDemand) = 5.0
+T3 --> SUB2 : 5.0
+deactivate T3
+
+SUB2 --> PP1 : 5.0
+deactivate SUB2
+
+PP1 --> PC : 35.0
+deactivate PP1
+
+PC --> SYS : totalDemand = 35.0 kWh
+deactivate PC
+
+note over SYS
+  System initialized successfully.
+  Total demand across grid: 35.0 kWh
+  Grid hierarchy verified.
+end note
+
+' ============================
+' PHASE 8: Shutdown
+' ============================
+== Phase 8 : System Shutdown ==
+
+SYS -> PC : getTotalCosts()
+activate PC
+PC --> SYS : totalCosts
+deactivate PC
+
+SYS -> PC : getTotalRevenue()
+activate PC
+PC --> SYS : totalRevenue
+deactivate PC
+
+note over SYS
+  Final accounting summary recorded.
+  Preparing for shutdown.
+end note
+
+loop for each Transformer [t1, t2, t3]
+  SYS -> T1 : removeChild(customerId)
+  activate T1
+  T1 --> SYS
+  deactivate T1
+  note right of T1 : Disconnect all customers\nfrom each transformer
+end
+
+loop for each Substation [sub1, sub2]
+  SYS -> SUB1 : removeChild(transformerId)
+  activate SUB1
+  SUB1 --> SYS
+  deactivate SUB1
+  note right of SUB1 : Disconnect all transformers\nfrom each substation
+end
+
+SYS -> PP1 : removeChild(substationId)
+activate PP1
+note right of PP1 : Disconnect all substations from plant
+PP1 --> SYS
+deactivate PP1
+
+note over SYS, E2
+  All grid connections removed.
+  System shutdown complete.
+end note
+
+@enduml
