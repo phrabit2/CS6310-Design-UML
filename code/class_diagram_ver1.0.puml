@@ -36,29 +36,30 @@ class PowerCompany {
   - standardRate : Real
   - totalCosts : Real
   - totalRevenue : Real
+  - totalDemand: Real
   - currentBillingCycle : Integer
   - currentBillingStartDate : Date
   - currentBillingEndDate : Date
   ' ===== Operations =====
-  + updateBillingCycle()
-  ' : void
   + createBills()
   ' : void
   + createEquipmentIssue()
   ' (issue : EquipmentIssue) : void
   + assignIssue()
   ' (issueId: string, employeeId: string): void
-  + getTotalCosts()
-  ' : Real
-  + getTotalRevenue()
-  ' : Real
-  + getTotalDemand()
-  ' : Real
   + payEmployee()
-  ' (employeeId: string) : void
+   ' (employeeId: string) : void
 }
 
-' TODO: add inner class Billing
+note left of PowerCompany::payEmployee
+  <b>context</b> payEmployee(employeeId)
+  <b>pre:</b> self.employee->exists(id=employeeId)
+  <b>post:</b> 
+  let e = self.employee->select(id=employeeId)->first()
+  e.hoursPaid = e.workingHours
+  self.totalCosts = self.totalCosts@pre + (emp.hourlyWage * emp.workingHours)
+end note
+
 class Bill {
   ' ===== Attributes =====
   - billId : String
@@ -74,8 +75,6 @@ class Bill {
   - amountPaid : Real
   - status : String
   ' ===== Operations =====
-  + getAmountToBePaid()
-  ' : Real
   + processPayment()
   ' (amount : Real) : void
   + getRemainingBalance()
@@ -85,6 +84,14 @@ class Bill {
   + isOverdue()
   ' : Boolean
 }
+
+note right of Bill
+  <b>{invariant}</b>
+  dueDate >= issueDate
+  amountPaid >= 0
+  <b>{body}</b> getRemainingBalance() : 
+  amountDue - amountPaid
+end note
 
 class Transaction {
   ' ===== Attributes =====
@@ -121,6 +128,15 @@ class Customer {
   ' (accountNumber: String) : Bill
 }
 
+note left of Customer::payBill
+  <b>context</b> payBill(billId, amount)
+  <b>pre:</b> amount > 0 and 
+  self.getBill(accountNumber).isFullyPaid() = false
+  <b>post:</b> 
+  let b = self.getBill(accountNumber)
+  b.amountPaid = b.amountPaid@pre + amount
+end note
+
 ' ===== GridNode (abstract) & Subclasses =====
 
 abstract class GridNode {
@@ -130,9 +146,8 @@ abstract class GridNode {
   # maxDistance : Integer 
   ' {distance limit to connect to child level}
   # initialCost : Real
-  ' === ??? ===
+  # maintenanceCost : Real
   # powerDemand : Real
-  # currentDemand: Real
   ' ===== Operations =====
   + distanceTo()
   ' (childNode : GridNode) : Integer
@@ -144,16 +159,19 @@ abstract class GridNode {
   ' (childId: String) : void'
   + {abstract} removeChild() 
   ' (childId: String) : void
-  + {abstract} getCostThisCycle() 
-  ' : Real
   + {abstract} checkCapacity()
   ' : Boolean
-  ' === ??? ===
   + {abstract} supply() 
   ' (demands: Real) : void
-  + {abstract} getDemands() 
-  ' : Real
+  + {abstract} transferUpstream(newUpstream: GridNode) 
+  ' : void
 }
+
+note right of GridNode::transferUpstream
+  <b>context</b> transferUpstream(newUpstream)
+  <b>pre:</b> newUpstream <> self.upstream
+  <b>post:</b> self.upstream = newUpstream
+end note
 
 class PowerPlant {
   ' ===== Attributes =====
@@ -161,7 +179,14 @@ class PowerPlant {
   - powerProducedThisCycle : Real
   + addPowerProducedThisCycle()
   '(kwh: Integer) : void'
+  + transferOwnership(newOwner: PowerCompany)
 }
+
+note right of PowerPlant::transferOwnership
+  <b>context</b> transferOwnership(newOwner)
+  <b>pre:</b> newOwner <> self.owner
+  <b>post:</b> self.owner = newOwner
+end note
 
 class Substation {
   ' ===== Attributes =====
@@ -187,6 +212,12 @@ class Employee {
   - hoursPaid : Integer
   - isAvailable: Boolean
 }
+
+note bottom of Employee
+  <b>{invariant}</b>
+  hourlyWage > 0
+  hoursPaid <= workingHours
+end note
 
 class EquipmentIssue {
   ' ===== Attributes =====
