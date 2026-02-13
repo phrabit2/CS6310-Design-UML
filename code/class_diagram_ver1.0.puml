@@ -153,25 +153,17 @@ abstract class GridNode {
   ' (childNode : GridNode) : Integer
   + withinDistance()
   ' (childNode : GridNode) : Boolean
-  + reportIssue()
-  ' (description : String) : EquipmentIssue
   + {abstract} addChild() 
   ' (childId: String) : void'
-  + {abstract} removeChild() 
+  + {abstract} removeChild()
   ' (childId: String) : void
+  + {abstract} updateParent()
+  ' (parentId: String): void
   + {abstract} checkCapacity()
   ' : Boolean
   + {abstract} supply() 
   ' (demands: Real) : void
-  + {abstract} transferUpstream(newUpstream: GridNode) 
-  ' : void
 }
-
-note right of GridNode::transferUpstream
-  <b>context</b> transferUpstream(newUpstream)
-  <b>pre:</b> newUpstream <> self.upstream
-  <b>post:</b> self.upstream = newUpstream
-end note
 
 class PowerPlant {
   ' ===== Attributes =====
@@ -179,14 +171,7 @@ class PowerPlant {
   - powerProducedThisCycle : Real
   + addPowerProducedThisCycle()
   '(kwh: Integer) : void'
-  + transferOwnership(newOwner: PowerCompany)
 }
-
-note right of PowerPlant::transferOwnership
-  <b>context</b> transferOwnership(newOwner)
-  <b>pre:</b> newOwner <> self.owner
-  <b>post:</b> self.owner = newOwner
-end note
 
 class Substation {
   ' ===== Attributes =====
