@@ -1,0 +1,493 @@
+@startuml Billing Cycle Execution
+
+title Group 20 : CS6310 Spring 2026 Assignment 1\nSequence Diagram 2 — Billing Cycle Execution\n<v0.2>
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam dpi 250
+
+' ===== Participants =====
+actor       "System"                as SYS
+participant "pc : PowerCompany"     as PC
+participant "pp1 : PowerPlant"      as PP1
+participant "sub1 : Substation"     as SUB1
+participant "sub2 : Substation"     as SUB2
+participant "t1 : Transformer"      as T1
+participant "t2 : Transformer"      as T2
+participant "t3 : Transformer"      as T3
+participant "c1 : Customer"         as C1
+participant "c2 : Customer"         as C2
+participant "c3 : Customer"         as C3
+participant "c4 : Customer"         as C4
+participant "c5 : Customer"         as C5
+participant "bill : Bill"           as BILL
+participant "txn : Transaction"     as TXN
+participant "e1 : Employee"         as E1
+participant "e2 : Employee"         as E2
+participant "issue : EquipmentIssue" as ISSUE
+
+' ====================================
+' STEP 1: Start New Billing Cycle
+' ====================================
+== Step 1 : Start New Billing Cycle ==
+
+SYS -> PC : updateBillingCycle()
+activate PC
+note right of PC
+  currentBillingCycle += 1
+  currentBillingStartDate = 2026-02-01
+  currentBillingEndDate = 2026-02-28
+end note
+PC --> SYS
+deactivate PC
+
+' ====================================
+' STEP 2: Power Generation
+' ====================================
+== Step 2 : Power Generation at PowerPlant ==
+
+SYS -> PP1 : addPowerProducedThisCycle(amount=500.0)
+activate PP1
+note right of PP1
+  powerProducedThisCycle += 500.0
+end note
+PP1 --> SYS
+deactivate PP1
+
+' ====================================
+' STEP 3: Demand Aggregation via supply()
+' ====================================
+== Step 3 : Power Demand Aggregation (Bottom-Up via supply()) ==
+
+SYS -> PC : getTotalDemand()
+activate PC
+
+PC -> PP1 : supply()
+activate PP1
+
+PP1 -> SUB1 : supply()
+activate SUB1
+
+SUB1 -> T1 : supply()
+activate T1
+note right of T1
+  Aggregate child demands:
+  C1.powerDemand + C2.powerDemand
+  = 5.0 + 4.0 = 9.0
+end note
+T1 --> SUB1 : 9.0
+deactivate T1
+
+SUB1 -> T2 : supply()
+activate T2
+note right of T2
+  C3.powerDemand + C4.powerDemand
+  = 15.0 + 6.0 = 21.0
+end note
+T2 --> SUB1 : 21.0
+deactivate T2
+
+SUB1 --> PP1 : 30.0
+deactivate SUB1
+
+PP1 -> SUB2 : supply()
+activate SUB2
+
+SUB2 -> T3 : supply()
+activate T3
+note right of T3
+  C5.powerDemand = 5.0
+end note
+T3 --> SUB2 : 5.0
+deactivate T3
+
+SUB2 --> PP1 : 5.0
+deactivate SUB2
+
+PP1 --> PC : 35.0
+deactivate PP1
+
+PC --> SYS : totalDemand = 35.0 kWh
+deactivate PC
+
+' ====================================
+' STEP 4: Record Customer Usage
+' ====================================
+== Step 4 : Record Customer Power Usage ==
+
+SYS -> C1 : recordUsage(usageKWh=150.0)
+activate C1
+note right of C1 : powerUsedKWh += 150.0
+C1 --> SYS
+deactivate C1
+
+SYS -> C2 : recordUsage(usageKWh=120.0)
+activate C2
+note right of C2 : powerUsedKWh += 120.0
+C2 --> SYS
+deactivate C2
+
+SYS -> C3 : recordUsage(usageKWh=450.0)
+activate C3
+note right of C3 : powerUsedKWh += 450.0\n(Commercial customer, higher usage)
+C3 --> SYS
+deactivate C3
+
+SYS -> C4 : recordUsage(usageKWh=180.0)
+activate C4
+note right of C4 : powerUsedKWh += 180.0
+C4 --> SYS
+deactivate C4
+
+SYS -> C5 : recordUsage(usageKWh=100.0)
+activate C5
+note right of C5 : powerUsedKWh += 100.0
+C5 --> SYS
+deactivate C5
+
+' ====================================
+' STEP 5: Bill Generation
+' ====================================
+== Step 5 : Bill Generation ==
+
+SYS -> PC : createBills()
+activate PC
+
+loop for each Customer served by PowerCompany
+
+  create BILL
+  PC -> BILL : <<create>> Bill(\n\tbillId="BILL-001",\n\taccountNumber="ACCT-001",\n\tbillingCycle=1,\n\tbillingStartDate=2026-02-01,\n\tbillingEndDate=2026-02-28,\n\tissueDate=2026-03-01,\n\tdueDate=2026-03-15,\n\tusageKWh=150.0,\n\tstandardRate=0.12,\n\tamountDue=18.00,\n\tamountPaid=0.0,\n\tstatus="UNPAID")
+  activate BILL
+  note right of BILL
+    amountDue = usageKWh × standardRate
+    = 150.0 × 0.12 = $18.00
+    {invariant} dueDate >= issueDate
+    {invariant} amountPaid >= 0
+  end note
+  BILL --> PC
+  deactivate BILL
+
+  note right of PC
+    Bills created for all customers:
+    C1 (ACCT-001): 150.0 kWh × $0.12 = $18.00
+    C2 (ACCT-002): 120.0 kWh × $0.12 = $14.40
+    C3 (ACCT-003): 450.0 kWh × $0.12 = $54.00
+    C4 (ACCT-004): 180.0 kWh × $0.12 = $21.60
+    C5 (ACCT-005): 100.0 kWh × $0.12 = $12.00
+  end note
+
+end
+
+PC --> SYS
+deactivate PC
+
+' ====================================
+' STEP 6: Equipment Issue Handling
+' (Moved BEFORE cost tracking so ISSUE
+'  instance exists when costs are aggregated)
+' ====================================
+== Step 6 : Equipment Issue Handling ==
+
+opt Equipment issue reported during cycle
+
+  SYS -> PC : createEquipmentIssue(\n\tnodeId="SUB-001",\n\tdescription="Overheating detected",\n\thousRequired=8,\n\tmaterialCost=150.0)
+  activate PC
+
+  create ISSUE
+  PC -> ISSUE : <<create>> EquipmentIssue(\n\tissueId="ISS-001",\n\tdescription="Overheating detected",\n\treportDate=2026-02-10,\n\thousRequired=8,\n\tmaterialCost=150.0,\n\tisResolved=false)
+  activate ISSUE
+  ISSUE --> PC
+  deactivate ISSUE
+
+  note right of PC : EquipmentIssue "reported from" GridNode\n(SUB-001 in this case)
+
+  PC --> SYS : issue created
+  deactivate PC
+
+  SYS -> PC : assignIssue(issueId="ISS-001", employeeId="EMP-001")
+  activate PC
+
+  PC -> E1 : isAvailable
+  activate E1
+  E1 --> PC : true
+  deactivate E1
+
+  note right of PC
+    Employee "assigned to" EquipmentIssue
+    e1 (Frank) assigned to ISS-001
+  end note
+
+  PC --> SYS
+  deactivate PC
+
+  opt Issue resolved this cycle
+    SYS -> ISSUE : reportResolveIssue()
+    activate ISSUE
+    note right of ISSUE
+      isResolved = true
+      e1.workingHours += hoursRequired (8)
+    end note
+    ISSUE --> SYS
+    deactivate ISSUE
+  end
+
+end
+
+' ====================================
+' STEP 7: Cost Tracking
+' ====================================
+== Step 7 : Cost Tracking ==
+
+SYS -> PC : getTotalCosts()
+activate PC
+
+' --- 7a: Grid Equipment Maintenance Costs ---
+note right of PC : 7a: Aggregate maintenance costs\nfrom all GridNodes
+
+PC -> SUB1 : getMaintenanceCost()
+activate SUB1
+SUB1 --> PC : 500.0
+deactivate SUB1
+
+PC -> SUB2 : getMaintenanceCost()
+activate SUB2
+SUB2 --> PC : 450.0
+deactivate SUB2
+
+PC -> T1 : getMaintenanceCost()
+activate T1
+T1 --> PC : 200.0
+deactivate T1
+
+PC -> T2 : getMaintenanceCost()
+activate T2
+T2 --> PC : 200.0
+deactivate T2
+
+PC -> T3 : getMaintenanceCost()
+activate T3
+T3 --> PC : 200.0
+deactivate T3
+
+note right of PC
+  Maintenance subtotal:
+  SUB1=$500 + SUB2=$450
+  + T1=$200 + T2=$200 + T3=$200
+  = $1,550.00
+end note
+
+' --- 7b: Equipment Issue Costs ---
+opt EquipmentIssue exists this cycle
+
+  note right of PC : 7b: Aggregate equipment issue costs
+
+  PC -> ISSUE : getTotalCosts()
+  activate ISSUE
+  ISSUE -> ISSUE : calculateCost()
+  note right of ISSUE
+    hoursRequired × employee.hourlyWage
+    + materialCost
+    = 8 × $35.00 + $150.00
+    = $430.00
+  end note
+  ISSUE --> PC : 430.0
+  deactivate ISSUE
+
+end
+
+note right of PC
+  Maintenance + Issue subtotal:
+  $1,550.00 + $430.00 = $1,980.00
+end note
+
+PC --> SYS : maintenanceCosts = $1,980.00
+deactivate PC
+
+' --- 7c: Employee Wage Costs ---
+note over SYS : 7c: Pay employees for hours worked
+
+SYS -> PC : payEmployee(employeeId="EMP-001")
+activate PC
+
+PC -> E1 : getPaymentDue()
+activate E1
+note right of E1
+  {pre} self.employee->exists(id=employeeId)
+  hourlyWage × workingHours
+  = $35.00 × 40 = $1,400.00
+  {post} e1.hoursPaid = e1.workingHours
+end note
+E1 --> PC : 1400.0
+deactivate E1
+
+note right of PC
+  totalCosts += $1,400.00
+  {post} self.totalCosts =
+  self.totalCosts@pre
+  + (emp.hourlyWage × emp.workingHours)
+end note
+
+PC --> SYS
+deactivate PC
+
+SYS -> PC : payEmployee(employeeId="EMP-002")
+activate PC
+
+PC -> E2 : getPaymentDue()
+activate E2
+note right of E2
+  hourlyWage × workingHours
+  = $40.00 × 40 = $1,600.00
+  {post} e2.hoursPaid = e2.workingHours
+end note
+E2 --> PC : 1600.0
+deactivate E2
+
+note right of PC : totalCosts += $1,600.00
+
+PC --> SYS
+deactivate PC
+
+note over SYS, PC
+  ═══ Total Costs Summary ═══
+  Maintenance:       $1,550.00
+  Equipment Issue:     $430.00
+  Employee Wages:    $3,000.00
+  ────────────────────────────
+  totalCosts =       $4,980.00
+end note
+
+' ====================================
+' STEP 8: Customer Payments
+' (loop + alt merged, corrected flow
+'  per payBill OCL constraint)
+' ====================================
+== Step 8 : Customer Payments ==
+
+loop for each Customer with outstanding Bill
+
+  ' --- C1 pays bill (detailed flow) ---
+  SYS -> C1 : payBill(billId="BILL-001", amount=18.00)
+  activate C1
+
+  C1 -> C1 : getBill(accountNumber="ACCT-001")
+  note right of C1
+    {pre} amount > 0
+    {pre} getBill(accountNumber).isFullyPaid() = false
+    Retrieve bill for this account
+  end note
+
+  alt payment successful
+
+    C1 -> BILL : processPayment(amount=18.00)
+    activate BILL
+
+    note right of BILL
+      amountPaid += 18.00
+      {post} b.amountPaid =
+      b.amountPaid@pre + amount
+    end note
+
+    create TXN
+    BILL -> TXN : <<create>> Transaction(\n\ttransactionId="TXN-001",\n\tbillId="BILL-001",\n\tpaymentDate=2026-02-15,\n\tamountPaid=18.00,\n\tpaymentMethod="CARD")
+    activate TXN
+    TXN -> TXN : recordPayment()
+    TXN --> BILL
+    deactivate TXN
+
+    BILL -> BILL : isFullyPaid()
+    note right of BILL
+      amountPaid >= amountDue ?
+      18.00 >= 18.00 → true
+      status = "PAID"
+    end note
+
+    BILL --> C1 : payment confirmed
+    deactivate BILL
+
+    C1 --> SYS : success
+    deactivate C1
+
+  else bill overdue (not paid by dueDate)
+
+    C1 -> BILL : isOverdue()
+    activate BILL
+    BILL --> C1 : true
+    deactivate BILL
+
+    C1 -> BILL : getRemainingBalance()
+    activate BILL
+    note right of BILL
+      {body} getRemainingBalance():
+      amountDue − amountPaid
+    end note
+    BILL --> C1 : remainingBalance
+    deactivate BILL
+
+    C1 --> SYS : overdue (remainingBalance)
+    deactivate C1
+
+    note right of SYS : Flag overdue bill for follow-up
+
+  end
+
+  note right of SYS
+    Repeat for each customer:
+    C1 pays $18.00 → BILL-001 PAID
+    C2 pays $14.40 → BILL-002 PAID
+    C3 pays $54.00 → BILL-003 PAID
+    C4 pays $21.60 → BILL-004 PAID
+    C5 pays $12.00 → BILL-005 PAID
+  end note
+
+end
+
+' ====================================
+' STEP 9: Revenue & Financial Summary
+' ====================================
+== Step 9 : Revenue & Financial Summary ==
+
+SYS -> PC : getTotalRevenue()
+activate PC
+
+PC -> PC : aggregateRevenue()
+note right of PC
+  Sum amountPaid from all Bills
+  where status = "PAID":
+  $18.00 + $14.40 + $54.00
+  + $21.60 + $12.00
+  = $120.00
+  totalRevenue = $120.00
+end note
+
+PC --> SYS : totalRevenue = $120.00
+deactivate PC
+
+SYS -> PC : getTotalCosts()
+activate PC
+PC --> SYS : totalCosts = $4,980.00
+deactivate PC
+
+note over SYS, PC
+  ═══════════════════════════════════
+  Billing Cycle 1 — Financial Summary
+  ═══════════════════════════════════
+  Total Revenue:    $120.00
+  Total Costs:    $4,980.00
+  Net:           -$4,860.00
+  ═══════════════════════════════════
+end note
+
+' ====================================
+' STEP 10: Cycle Complete
+' ====================================
+== Step 10 : Billing Cycle Complete ==
+
+note over SYS, ISSUE
+  Billing cycle 1 complete.
+  All bills generated, payments processed,
+  costs tracked, and issues handled.
+  System ready for next updateBillingCycle().
+end note
+
+@enduml
