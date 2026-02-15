@@ -155,7 +155,6 @@ activate PC
 
 loop for each Customer served by PowerCompany
 
-  create BILL
   PC -> BILL : <<create>> Bill(\n\tbillId="BILL-001",\n\taccountNumber="ACCT-001",\n\tbillingCycle=1,\n\tbillingStartDate=2026-02-01,\n\tbillingEndDate=2026-02-28,\n\tissueDate=2026-03-01,\n\tdueDate=2026-03-15,\n\tusageKWh=150.0,\n\tstandardRate=0.12,\n\tamountDue=18.00,\n\tamountPaid=0.0,\n\tstatus="UNPAID")
   activate BILL
   note right of BILL
@@ -193,7 +192,6 @@ opt Equipment issue reported during cycle
   SYS -> PC : createEquipmentIssue(\n\tnodeId="SUB-001",\n\tdescription="Overheating detected",\n\thousRequired=8,\n\tmaterialCost=150.0)
   activate PC
 
-  create ISSUE
   PC -> ISSUE : <<create>> EquipmentIssue(\n\tissueId="ISS-001",\n\tdescription="Overheating detected",\n\treportDate=2026-02-10,\n\thousRequired=8,\n\tmaterialCost=150.0,\n\tisResolved=false)
   activate ISSUE
   ISSUE --> PC
@@ -388,7 +386,6 @@ loop for each Customer with outstanding Bill
       b.amountPaid@pre + amount
     end note
 
-    create TXN
     BILL -> TXN : <<create>> Transaction(\n\ttransactionId="TXN-001",\n\tbillId="BILL-001",\n\tpaymentDate=2026-02-15,\n\tamountPaid=18.00,\n\tpaymentMethod="CARD")
     activate TXN
     TXN -> TXN : recordPayment()

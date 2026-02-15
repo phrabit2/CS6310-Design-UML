@@ -27,7 +27,6 @@ participant "e2 : Employee"     as E2
 ' ============================
 == Phase 1 : PowerCompany Initialization ==
 
-create PC
 SYS -> PC : <<create>> PowerCompany(\n\tlongName="Florida Power & Light",\n\tshortName="fpl",\n\tstandardRate=0.12)
 activate PC
 note right of PC
@@ -47,7 +46,6 @@ deactivate PC
 ' ============================
 == Phase 2 : PowerPlant Creation ==
 
-create PP1
 SYS -> PP1 : <<create>> PowerPlant(\n\tplantId="PP-001",\n\tx=10, y=10,\n\tmaxDistance=50)
 activate PP1
 note right of PP1
@@ -66,7 +64,6 @@ note over PC, PP1 : PowerCompany "owns" PowerPlant [aggregation 1..0..*]
 == Phase 3 : Substation Creation & Connection to PowerPlant ==
 
 ' --- SUB1 ---
-create SUB1
 SYS -> SUB1 : <<create>> Substation(\n\tsubstationId="SUB-001",\n\tx=20, y=15,\n\tmaxDistance=30,\n\tmaintenanceCostPerCycle=500.0)
 activate SUB1
 SUB1 --> SYS
@@ -99,7 +96,6 @@ end
 deactivate PP1
 
 ' --- SUB2 ---
-create SUB2
 SYS -> SUB2 : <<create>> Substation(\n\tsubstationId="SUB-002",\n\tx=35, y=20,\n\tmaxDistance=25,\n\tmaintenanceCostPerCycle=450.0)
 activate SUB2
 SUB2 --> SYS
@@ -130,7 +126,6 @@ deactivate PP1
 == Phase 4 : Transformer Creation & Connection to Substations ==
 
 ' --- T1 → SUB1 ---
-create T1
 SYS -> T1 : <<create>> Transformer(\n\ttransformerId="T-001",\n\tx=25, y=18,\n\tmaxDistance=10,\n\tmaintenanceCostPerCycle=200.0)
 activate T1
 T1 --> SYS
@@ -162,7 +157,6 @@ end
 deactivate SUB1
 
 ' --- T2 → SUB1 ---
-create T2
 SYS -> T2 : <<create>> Transformer(\n\ttransformerId="T-002",\n\tx=22, y=12,\n\tmaxDistance=10,\n\tmaintenanceCostPerCycle=200.0)
 activate T2
 T2 --> SYS
@@ -188,7 +182,6 @@ SUB1 --> SYS : success
 deactivate SUB1
 
 ' --- T3 → SUB2 ---
-create T3
 SYS -> T3 : <<create>> Transformer(\n\ttransformerId="T-003",\n\tx=38, y=23,\n\tmaxDistance=10,\n\tmaintenanceCostPerCycle=200.0)
 activate T3
 T3 --> SYS
@@ -220,7 +213,6 @@ deactivate SUB2
 == Phase 5 : Customer Registration & Connection to Transformers ==
 
 ' --- C1 → T1 ---
-create C1
 SYS -> C1 : <<create>> Customer(\n\taccountNumber="ACCT-001",\n\tname="Alice",\n\tisResidential=true,\n\tpowerDemand=5.0,\n\tx=27, y=19,\n\tmaxDistance=10)
 activate C1
 C1 --> SYS
@@ -252,7 +244,6 @@ end
 deactivate T1
 
 ' --- C2 → T1 ---
-create C2
 SYS -> C2 : <<create>> Customer(\n\taccountNumber="ACCT-002",\n\tname="Bob",\n\tisResidential=true,\n\tpowerDemand=4.0,\n\tx=26, y=17,\n\tmaxDistance=10)
 activate C2
 C2 --> SYS
@@ -278,7 +269,6 @@ T1 --> SYS : success
 deactivate T1
 
 ' --- C3 → T2 ---
-create C3
 SYS -> C3 : <<create>> Customer(\n\taccountNumber="ACCT-003",\n\tname="Carol",\n\tisResidential=false,\n\tpowerDemand=15.0,\n\tx=23, y=13,\n\tmaxDistance=10)
 activate C3
 C3 --> SYS
@@ -304,7 +294,6 @@ T2 --> SYS : success
 deactivate T2
 
 ' --- C4 → T2 ---
-create C4
 SYS -> C4 : <<create>> Customer(\n\taccountNumber="ACCT-004",\n\tname="David",\n\tisResidential=true,\n\tpowerDemand=6.0,\n\tx=21, y=11,\n\tmaxDistance=10)
 activate C4
 C4 --> SYS
@@ -330,7 +319,6 @@ T2 --> SYS : success
 deactivate T2
 
 ' --- C5 → T3 ---
-create C5
 SYS -> C5 : <<create>> Customer(\n\taccountNumber="ACCT-005",\n\tname="Eve",\n\tisResidential=true,\n\tpowerDemand=5.0,\n\tx=39, y=24,\n\tmaxDistance=10)
 activate C5
 C5 --> SYS
@@ -367,13 +355,11 @@ end note
 ' ============================
 == Phase 6 : Employee Hiring ==
 
-create E1
 SYS -> E1 : <<create>> Employee(\n\temployeeId="EMP-001",\n\tname="Frank",\n\tstartDate=2026-01-01,\n\thourlyWage=35.0,\n\tworkingHours=0,\n\thoursPaid=0,\n\tisAvailable=true)
 activate E1
 E1 --> SYS
 deactivate E1
 
-create E2
 SYS -> E2 : <<create>> Employee(\n\temployeeId="EMP-002",\n\tname="Grace",\n\tstartDate=2026-01-15,\n\thourlyWage=40.0,\n\tworkingHours=0,\n\thoursPaid=0,\n\tisAvailable=true)
 activate E2
 E2 --> SYS
