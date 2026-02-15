@@ -5,6 +5,7 @@ title Group 20 : CS6310 Spring 2026 Assignment 1\nSequence Diagram 2 — Billing
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 skinparam dpi 250
+hide footbox
 
 ' ===== Participants =====
 actor       "System"                as SYS
