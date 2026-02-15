@@ -369,22 +369,32 @@ loop for each Customer with outstanding Bill
   SYS -> C1 : payBill(billId="BILL-001", amount=18.00)
   activate C1
 
-  C1 -> C1 : getBill(accountNumber="ACCT-001")
   note right of C1
-    {pre} amount > 0
-    {pre} getBill(accountNumber).isFullyPaid() = false
-    Retrieve bill for this account
+    {pre} amount (18.00) > 0 ✓
   end note
 
-  alt payment successful
+  ' Precondition: getBill(accountNumber).isFullyPaid() = false
+  C1 -> C1 : getBill(accountNumber="ACCT-001")
+  C1 -> BILL : isFullyPaid()
+  activate BILL
+  BILL --> C1 : false
+  deactivate BILL
+
+  note right of C1
+    {pre} getBill("ACCT-001").isFullyPaid()
+    = false ✓
+    Pre-conditions satisfied
+  end note
+
+  alt pre-conditions met (payment successful)
 
     C1 -> BILL : processPayment(amount=18.00)
     activate BILL
 
     note right of BILL
-      amountPaid += 18.00
       {post} b.amountPaid =
       b.amountPaid@pre + amount
+      amountPaid: 0.0 + 18.00 = 18.00
     end note
 
     BILL -> TXN : <<create>> Transaction(\n\ttransactionId="TXN-001",\n\tbillId="BILL-001",\n\tpaymentDate=2026-02-15,\n\tamountPaid=18.00,\n\tpaymentMethod="CARD")
