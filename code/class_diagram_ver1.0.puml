@@ -105,7 +105,7 @@ class Transaction {
   ' : void
 }
 
-' ===== Customer (separate, not inheriting GridNode) =====
+' ===== Customer =====
 
 class Customer {
   ' ===== Attributes =====
@@ -114,12 +114,7 @@ class Customer {
   - isResidential : Boolean
   - powerDemand : Real
   - powerUsedKWh : Real
-  - x : Integer
-  - y : Integer
-  - maxDistance : Integer
   ' ===== Operations =====
-  + distanceFrom()
-  ' (other : GridNode) : Integer
   + recordUsage()
   ' (kWh : Real) : void
   + payBill()
@@ -164,6 +159,14 @@ abstract class GridNode {
   + {abstract} supply() 
   ' (demands: Real) : void
 }
+
+note right of GridNode
+  <b>context</b> GridNode
+  <b>inv:</b>
+  self.children->forAll(c |
+    self.distanceTo(c) <= self.maxDistance
+  )
+end note
 
 class PowerPlant {
   ' ===== Attributes =====
@@ -243,6 +246,7 @@ EquipmentIssue "0..*" --> "1" GridNode : reported from
 PowerPlant -right-|> GridNode
 Substation -right-|> GridNode
 Transformer -right-|> GridNode
+Customer -right-|> GridNode
 
 ' Power chain
 PowerPlant "1" o-down- "0..20" Substation : supplies to
