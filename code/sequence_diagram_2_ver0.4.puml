@@ -418,22 +418,22 @@ loop for each Customer with outstanding Bill
 
   else bill overdue (not paid by dueDate)
 
-    C1 -> BILL : isOverdue()
+    C1 --> SYS : payment not made
+    deactivate C1
+
+    SYS -> BILL : isOverdue()
     activate BILL
-    BILL --> C1 : true
+    BILL --> SYS : true
     deactivate BILL
 
-    C1 -> BILL : getRemainingBalance()
+    SYS -> BILL : getRemainingBalance()
     activate BILL
     note right of BILL
       {body} getRemainingBalance():
       amountDue − amountPaid
     end note
-    BILL --> C1 : remainingBalance
+    BILL --> SYS : remainingBalance
     deactivate BILL
-
-    C1 --> SYS : overdue (remainingBalance)
-    deactivate C1
 
     note right of SYS : Flag overdue bill for follow-up
 
