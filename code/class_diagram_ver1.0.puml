@@ -112,7 +112,6 @@ class Customer {
   - accountNumber : String
   - name : String
   - isResidential : Boolean
-  - powerDemand : Real
   - powerUsedKWh : Real
   ' ===== Operations =====
   + recordUsage()
@@ -148,45 +147,71 @@ abstract class GridNode {
   ' (childNode : GridNode) : Integer
   + withinDistance()
   ' (childNode : GridNode) : Boolean
-  + {abstract} addChild() 
-  ' (childId: String) : void'
-  + {abstract} removeChild()
-  ' (childId: String) : void
   + {abstract} updateParent()
   ' (parentId: String): void
   + {abstract} checkCapacity()
   ' : Boolean
-  + {abstract} supply() 
-  ' (demands: Real) : void
 }
-
-note right of GridNode
-  <b>context</b> GridNode
-  <b>inv:</b>
-  self.children->forAll(c |
-    self.distanceTo(c) <= self.maxDistance
-  )
-end note
 
 class PowerPlant {
   ' ===== Attributes =====
   - plantId: String
   - powerProducedThisCycle : Real
+  ' ===== Operations =====
   + addPowerProducedThisCycle()
   '(kwh: Integer) : void'
+  + addChild() 
+  ' (childId: String) : void'
+  + removeChild()
+  ' (childId: String) : void
+  + {abstract} supply() 
+  ' (demands: Real) : void
 }
+
+note left of PowerPlant
+  <b>inv:</b> self.Substation->forAll(s | 
+  self.distanceTo(s) <= self.maxDistance)
+end note
 
 class Substation {
   ' ===== Attributes =====
   - substationId: String
   - maintenanceCostPerCycle: Real
+  ' ===== Operations =====
+  + addChild() 
+  ' (childId: String) : void'
+  + removeChild()
+  ' (childId: String) : void
+  + {abstract} stepDown() 
+  ' (demands: Real) : void
+  + {abstract} supply() 
+  ' (demands: Real) : void
 }
+
+note left of Substation
+  <b>inv:</b> self.Transformer->forAll(t | 
+  self.distanceTo(t) <= self.maxDistance)
+end note
 
 class Transformer {
   ' ===== Attributes =====
   - transformerId: String
   - maintenanceCostPerCycle: Real
+  ' ===== Operations =====
+  + addChild() 
+  ' (childId: String) : void'
+  + removeChild()
+  ' (childId: String) : void
+  + {abstract} stepDown() 
+  ' (demands: Real) : void
+  + {abstract} supply() 
+  ' (demands: Real) : void
 }
+
+note left of Transformer
+  <b>inv:</b> self.Customer->forAll(c | 
+  self.distanceTo(c) <= self.maxDistance)
+end note
 
 ' ===== Employee & EquipmentIssue =====
 
