@@ -26,19 +26,7 @@ skinparam linetype ortho
 skinparam nodesep 60
 skinparam ranksep 60
 
-
 ' ===== CLASSES =====
-
-abstract class Location {
-  ' ===== Attributes =====
-  # x : Integer
-  # y : Integer
-  ' ===== Operations =====
-  + distanceTo()
-  ' (other : Location) : Integer
-  + withinDistance()
-  ' (other : Location) : Boolean
-}
 
 class PowerCompany {
   ' ===== Attributes =====
@@ -48,9 +36,6 @@ class PowerCompany {
   - totalCosts : Real
   - totalRevenue : Real
   - totalDemand: Real
-  - currentBillingCycle : Integer
-  - currentBillingStartDate : Date
-  - currentBillingEndDate : Date
   ' ===== Operations =====
   + createBills()
   ' : void
@@ -70,6 +55,20 @@ note left of PowerCompany::payEmployee
   e.hoursPaid = e.workingHours
   self.totalCosts = self.totalCosts@pre + (emp.hourlyWage * emp.workingHours)
 end note
+
+
+' ===== Bill =====
+
+class BillManager {
+  ' ===== Attributes =====
+    - standardRate : Real
+    - currentBillingCycle : Integer
+    - currentBillingStartDate : Date
+    - currentBillingEndDate : Date
+  ' ===== Operations =====
+    + createBills()
+    ' : void
+}
 
 class Bill {
   ' ===== Attributes =====
@@ -147,46 +146,7 @@ note left of Customer::payBill
   b.amountPaid = b.amountPaid@pre + amount
 end note
 
-' ===== GridNode (abstract) & Subclasses =====
-
-abstract class GridNode {
-  ' ===== Attributes =====
-  # maxDistance : Integer 
-  ' {distance limit to connect to child level}
-  # initialCost : Real
-  # maintenanceCost : Real
-  # powerDemand : Real
-  ' ===== Operations =====
-  + distanceTo()
-  ' (childNode : GridNode) : Integer
-  + withinDistance()
-  ' (childNode : GridNode) : Boolean
-  + {abstract} updateParent()
-  ' (parentId: String): void
-  + {abstract} checkCapacity()
-  ' : Boolean
-}
-
-class Gopher {
-  ' ===== Attributes =====
-  - gopherId : String
-  - damageRadius : Real
-  - damageProbability : Real
-  - damageLevel : Real
-  - movementMode : MovementMode
-  ' ===== Operations =====
-  + moveTo()
-  ' (newX : Integer, newY : Integer) : void
-  + moveRandomly()
-  ' () : void
-  + applyDamage()
-  ' (target : GridNode) : void
-}
-
-enum MovementMode {
-  CONTROLLED
-  RANDOM
-}
+' ===== ConfigurationManager =====
 
 class ConfigurationManager {
   ' ===== Attributes =====
@@ -197,6 +157,8 @@ class ConfigurationManager {
   ' () : void
   + loadFromFile()
   ' () : void
+  + saveToFile()
+  ' () : void
   + getValue()
   ' (key : String) : String
   + setValue()
@@ -204,6 +166,8 @@ class ConfigurationManager {
   + validate()
   ' (key : String, value : String) : Boolean
 }
+
+' ===== ArchiveManager =====
 
 class ArchiveManager {
   ' ===== Attributes =====
@@ -227,6 +191,69 @@ class RetentionPolicy {
   ' (ageInCycles : Integer) : Boolean
   + isPurgeEligible()
   ' (ageInCycles : Integer) : Boolean
+}
+
+' ===== Location =====
+
+abstract class Location {
+  ' ===== Attributes =====
+  # x : Integer
+  # y : Integer
+  ' ===== Operations =====
+  + distanceTo()
+  ' (other : Location) : Integer
+  + withinDistance()
+  ' (other : Location) : Boolean
+}
+
+' ===== Gopher =====
+
+class GopherManager {
+  ' ===== Attributes =====
+  ' ===== Operations =====
+  + createGopher() : void
+  + removeGopher() : void
+}
+
+class Gopher {
+  ' ===== Attributes =====
+  - gopherId : String
+  - damageRadius : Real
+  - damageProbability : Real
+  - damageLevel : Real
+  - movementMode : MovementMode
+  ' ===== Operations =====
+  + moveTo()
+  ' (newX : Integer, newY : Integer) : void
+  + moveRandomly()
+  ' () : void
+  + applyDamage()
+  ' (target : GridNode) : void
+}
+
+enum MovementMode {
+  CONTROLLED
+  RANDOM
+}
+
+' ===== GridNode (abstract) & Subclasses =====
+
+abstract class GridNode {
+  ' ===== Attributes =====
+  # maxDistance : Integer 
+  ' {distance limit to connect to child level}
+  # initialCost : Real
+  # maintenanceCost : Real
+  # powerDemand : Real
+  ' ===== Operations =====
+  + distanceTo()
+  ' (childNode : GridNode) : Integer
+  + withinDistance()
+  ' (childNode : GridNode) : Boolean
+  + {abstract} updateParent()
+  ' (parentId: String): void
+  + {abstract} checkCapacity()
+  ' : Boolean
 }
 
 class PowerPlant {
@@ -340,6 +367,9 @@ Transaction "1" --> "1" Bill : pays for
 Customer "1" --> "0..*" Transaction : makes
 Customer --> CustomerType : classified as
 
+' GopherManager and Gopher'
+
+
 ' Employee & EquipmentIssue
 Employee "1" --> "0..*" EquipmentIssue : assigned to
 EquipmentIssue "0..*" --> "1" GridNode : reported from
@@ -355,11 +385,19 @@ Customer -right-|> GridNode
 ' Assignment 3 additions
 Gopher --> MovementMode : uses
 Gopher ..> GridNode : damages nearby
+GopherManager --> Gopher: gophers 
+
+Bill ..> BillManager: uses
+
 ArchiveManager --> RetentionPolicy : applies
 ArchiveManager ..> Bill : archives
 ArchiveManager ..> Transaction : archives
 ArchiveManager ..> EquipmentIssue : archives
+
 PowerCompany ..> ConfigurationManager : uses
+RetentionPolicy ..> ConfigurationManager : uses
+GridNode ..> ConfigurationManager : uses
+GopherManager ..> ConfigurationManager : uses
 
 ' Power chain
 PowerPlant "1" o-down- "0..20" Substation : supplies to
