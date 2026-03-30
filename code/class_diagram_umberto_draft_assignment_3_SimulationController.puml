@@ -1,0 +1,387 @@
+@startuml Power Grid Class Diagram
+title Group 20 : CS6310 Spring 2026 Assignment 3\nPower Grid Class Diagram
+
+/' Reminders and Guidelines
+
+- Base diagram updated for Assignment 3 additions
+- Required elements: attribute types, relationship types
+- Cardinalities required
+- Use basic/primitive data types only
+- Default private/public symbols with black text on white background
+- Avoid curved line
+- Avoid crossing lines
+
+'/
+
+' Display settings
+skinparam shadowing true
+skinparam roundcorner 15
+skinparam classBackgroundColor white
+skinparam dpi 250
+skinparam classAttributeIconSize 0
+skinparam pageSize A0
+skinparam linetype ortho
+
+skinparam nodesep 60
+skinparam ranksep 60
+
+' ===== Simulation Controller =====
+enum SimulationStatus {
+  READY
+  RUNNING
+  PAUSED
+  STOPPED
+}
+
+class SimulationController {
+  ' ===== Attributes =====
+  - currentTick : Integer
+  - status : SimulationStatus
+  - tickDurationInHours : Integer
+  ' ===== Operations =====
+  + advanceSimulation(ticks : Integer) : void
+  + jumpToTick(targetTick : Integer) : void
+  + processSingleTick() : void
+  + pauseSimulation() : void
+  + resetSimulation() : void
+}
+
+' ===== CLASSES =====
+
+class PowerCompany {
+  ' ===== Attributes =====
+  - longName : String
+  - shortName : String
+  - standardRate : Real
+  - totalCosts : Real
+  - totalRevenue : Real
+  - totalDemand: Real
+  ' ===== Operations =====
+  + createBills() : void
+  + createEquipmentIssue(issue : EquipmentIssue) : void
+  + assignIssue(issueId : String, employeeId : String) : void
+  + payEmployee(employeeId : String) : void
+}
+
+note left of PowerCompany::payEmployee
+  <b>context</b> payEmployee(employeeId)
+  <b>pre:</b> self.employee->exists(id=employeeId)
+  <b>post:</b> 
+  let e = self.employee->select(id=employeeId)->first()
+  e.hoursPaid = e.workingHours
+  self.totalCosts = self.totalCosts@pre + (emp.hourlyWage * emp.workingHours)
+end note
+
+
+' ===== Bill =====
+
+class BillManager {
+  ' ===== Attributes =====
+    - standardRate : Real
+    - currentBillingCycle : Integer
+    - currentBillingStartDate : Date
+    - currentBillingEndDate : Date
+  ' ===== Operations =====
+    + createBills() : void
+}
+
+class Bill {
+  ' ===== Attributes =====
+  - billId : String
+  - accountNumber : String
+  - billingCycle : Integer
+  - billingStartDate: Date
+  - billingEndDate: Date
+  - issueDate : Date
+  - dueDate : Date
+  - usageKWh : Real
+  - standardRate : Real
+  - amountDue : Real
+  - amountPaid : Real
+  - status : String
+  ' ===== Operations =====
+  + processPayment(amount : Real) : void
+  + getRemainingBalance() : Real
+  + isFullyPaid() : Boolean
+  + isOverdue() : Boolean
+}
+
+note right of Bill
+  <b>{invariant}</b>
+  dueDate >= issueDate
+  amountPaid >= 0
+  <b>{body}</b> getRemainingBalance() : 
+  amountDue - amountPaid
+end note
+
+class Transaction {
+  ' ===== Attributes =====
+  - transactionId : String
+  - billId : String
+  - paymentDate : Date
+  - amountPaid : Real
+  - paymentMethod : String
+  ' ===== Operations =====
+  + recordPayment() : void
+}
+
+' ===== Customer =====
+
+class Customer {
+  ' ===== Attributes =====
+  - accountNumber : String
+  - name : String
+  - customerType : CustomerType
+  - powerUsedKWh : Real
+  ' ===== Operations =====
+  + recordUsage(kWh : Real) : void
+  + payBill(billId : String, amount : Real) : void
+  + getBill(accountNumber : String) : Bill
+}
+
+enum CustomerType {
+  RESIDENTIAL
+  COMMERCIAL
+}
+
+note left of Customer::payBill
+  <b>context</b> payBill(billId, amount)
+  <b>pre:</b> amount > 0 and 
+  self.getBill(accountNumber).isFullyPaid() = false
+  <b>post:</b> 
+  let b = self.getBill(accountNumber)
+  b.amountPaid = b.amountPaid@pre + amount
+end note
+
+' ===== ConfigurationManager =====
+
+class ConfigurationManager {
+  ' ===== Attributes =====
+  - configFilePath : String
+  - parameters : Map<String, String>
+  ' ===== Operations =====
+  + loadDefaults() : void
+  + loadFromFile() : void
+  + saveToFile() : void
+  + getValue(key : String) : String
+  + setValue(key : String, value : String) : void
+  + validate(key : String, value : String) : Boolean
+}
+
+' ===== ArchiveManager =====
+
+class ArchiveManager {
+  ' ===== Attributes =====
+  - basePath : String
+  ' ===== Operations =====
+  + archiveRecord(category : String, recordId : String) : void
+  + purgeExpiredRecords(currentCycle : Integer) : void
+  + logArchiveAction(action : String, recordId : String) : void
+}
+
+class RetentionPolicy {
+  ' ===== Attributes =====
+  - activeRetentionCycles : Integer
+  - archiveRetentionCycles : Integer
+  - autoPurge : Boolean
+  ' ===== Operations =====
+  + isArchiveEligible(ageInCycles : Integer) : Boolean
+  + isPurgeEligible(ageInCycles : Integer) : Boolean
+}
+
+' ===== Location =====
+
+abstract class Location {
+  ' ===== Attributes =====
+  # x : Integer
+  # y : Integer
+  ' ===== Operations =====
+  + distanceTo(other : Location) : Integer
+  + withinDistance(other : Location) : Boolean
+}
+
+' ===== Gopher =====
+
+class GopherManager {
+  ' ===== Attributes =====
+  ' ===== Operations =====
+  + createGopher() : void
+  + removeGopher() : void
+  + triggerGopherMovement() : void
+}
+
+class Gopher {
+  ' ===== Attributes =====
+  - gopherId : String
+  - damageRadius : Real
+  - damageProbability : Real
+  - damageLevel : Real
+  - movementMode : MovementMode
+  ' ===== Operations =====
+  + moveTo(newX : Integer, newY : Integer) : void
+  + moveRandomly() : void
+  + applyDamage(target : GridNode) : void
+}
+
+enum MovementMode {
+  CONTROLLED
+  RANDOM
+}
+
+' ===== GridNode (abstract) & Subclasses =====
+
+abstract class GridNode {
+  ' ===== Attributes =====
+  # maxDistance : Integer 
+  ' {distance limit to connect to child level}
+  # initialCost : Real
+  # maintenanceCost : Real
+  # powerDemand : Real
+  ' ===== Operations =====
+  + distanceTo(childNode : GridNode) : Integer
+  + withinDistance(childNode : GridNode) : Boolean
+  + {abstract} updateParent(parentId : String) : void
+  + {abstract} checkCapacity() : Boolean
+}
+
+class PowerPlant {
+  ' ===== Attributes =====
+  - plantId: String
+  - powerProducedThisCycle : Real
+  ' ===== Operations =====
+  + addPowerProducedThisCycle(kwh : Integer) : void
+  + addChild(childId : String) : void
+  + removeChild(childId : String) : void
+  + {abstract} supply(demands : Real) : void
+}
+
+note left of PowerPlant
+  <b>inv:</b> self.Substation->forAll(s | 
+  self.distanceTo(s) <= self.maxDistance)
+end note
+
+class Substation {
+  ' ===== Attributes =====
+  - substationId: String
+  - maintenanceCostPerCycle: Real
+  ' ===== Operations =====
+  + addChild(childId : String) : void
+  + removeChild(childId : String) : void
+  + {abstract} stepDown(demands : Real) : void
+  + {abstract} supply(demands : Real) : void
+}
+
+note left of Substation
+  <b>inv:</b> self.Transformer->forAll(t | 
+  self.distanceTo(t) <= self.maxDistance)
+end note
+
+class Transformer {
+  ' ===== Attributes =====
+  - transformerId: String
+  - maintenanceCostPerCycle: Real
+  ' ===== Operations =====
+  + addChild(childId : String) : void
+  + removeChild(childId : String) : void
+  + {abstract} stepDown(demands : Real) : void
+  + {abstract} supply(demands : Real) : void
+}
+
+note left of Transformer
+  <b>inv:</b> self.Customer->forAll(c | 
+  self.distanceTo(c) <= self.maxDistance)
+end note
+
+' ===== Employee & EquipmentIssue =====
+
+class Employee {
+  ' ===== Attributes =====
+  - employeeId : String
+  - name : String
+  - startDate : Date
+  - hourlyWage : Real
+  - workingHours : Integer
+  - hoursPaid : Integer
+  - isAvailable: Boolean
+}
+
+note bottom of Employee
+  <b>{invariant}</b>
+  hourlyWage > 0
+  hoursPaid <= workingHours
+end note
+
+class EquipmentIssue {
+  ' ===== Attributes =====
+  - issueId : String
+  - description : String
+  - reportDate : Date
+  - hoursRequired : Integer
+  - materialCost : Real
+  - isResolved : Boolean
+  ' ===== Operations =====
+  + getTotalCosts() : Real
+  + reportResolveIssue(issueId : String) : void
+}
+
+' ===== RELATIONSHIPS =====
+
+' Controller relationships (New for Assignment 3)
+SimulationController "1" --> "1" PowerCompany : orchestrates
+SimulationController "1" --> "1" GopherManager : controls
+SimulationController "1" --> "1" ArchiveManager : triggers cleanup
+SimulationController --> SimulationStatus : tracks state
+
+' PowerCompany relationships
+PowerCompany "1" o-right- "0..*" PowerPlant : owns
+PowerCompany "1" -left-> "0..*" Customer : serves
+PowerCompany "1" --> "0..*" Employee : employs
+PowerCompany "1" --> "0..*" EquipmentIssue : tracks
+PowerCompany "1" --> "0..*" Bill : generates
+
+' Bill and Transaction relationships
+Bill "1" --> "1" Customer : generated to
+Customer "1" --> "0..*" Bill : receives
+Bill "1" --> "0..*" Transaction : paid by
+Transaction "1" --> "1" Bill : pays for
+Customer "1" --> "0..*" Transaction : makes
+Customer --> CustomerType : classified as
+
+' GopherManager and Gopher'
+
+
+' Employee & EquipmentIssue
+Employee "1" --> "0..*" EquipmentIssue : assigned to
+EquipmentIssue "0..*" --> "1" GridNode : reported from
+
+' GridNode inheritance
+GridNode -up-|> Location
+Gopher -up-|> Location
+PowerPlant -right-|> GridNode
+Substation -right-|> GridNode
+Transformer -right-|> GridNode
+Customer -right-|> GridNode
+
+' Assignment 3 additions
+Gopher --> MovementMode : uses
+Gopher ..> GridNode : damages nearby
+GopherManager --> Gopher: manages
+
+Bill ..> BillManager: uses
+
+ArchiveManager --> RetentionPolicy : applies
+ArchiveManager ..> Bill : archives
+ArchiveManager ..> Transaction : archives
+ArchiveManager ..> EquipmentIssue : archives
+
+PowerCompany ..> ConfigurationManager : uses
+RetentionPolicy ..> ConfigurationManager : uses
+GridNode ..> ConfigurationManager : uses
+GopherManager ..> ConfigurationManager : uses
+
+' Power chain
+PowerPlant "1" o-down- "0..20" Substation : supplies to
+Substation "1" o-down- "0..10" Transformer : supplies to
+Transformer "1" -down-> "0..5" Customer : supplies to
+
+@enduml
