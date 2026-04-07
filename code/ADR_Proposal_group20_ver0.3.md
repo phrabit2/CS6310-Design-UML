@@ -29,10 +29,10 @@ Location (abstract)
   + withinDistance(other : Location, range : Integer) : Boolean
 
 GridNode (abstract) extends Location
-  - maxDistance : Integer
-  - initialCost : Real
-  - maintenanceCost : Real
-  - powerDemand : Real
+  # maxDistance : Integer
+  # initialCost : Real
+  # maintenanceCost : Real
+  # powerDemand : Real
   + checkCapacity() : Boolean
   + updateParent(parentId : String) : void
 
@@ -135,7 +135,7 @@ Success means core parameters can be changed without source-code edits, configur
 
 ---
 
-# ADR-004: Simulation Controller (Architectural Addition)
+# ADR-004: Simulation Manager (Architectural Addition)
 
 **Type:** Architectural Core Update
 **Date:** 2026-04-01
@@ -146,12 +146,12 @@ Success means core parameters can be changed without source-code edits, configur
 The assignment documentation explicitly states that the simulation is not allowed to use live system clocks or wait on real-world time. Because environmental hazards (Gophers), billing cycles, and power consumption must advance logically, the application requires a deterministic way to move "time" forward without relying on Java thread sleeps or system timers.
 
 ## Decision
-We will introduce a central SimulationController. This class will act as the core engine of the system, managing a logical currentTick integer. All time-based events—such as gopher movement, grid capacity checks, and billing cycle transitions—will be triggered sequentially when the controller advances the tick.
+We will introduce a central SimulationManager. This class will act as the core engine of the system, managing a logical currentTick integer. All time-based events—such as gopher movement, grid capacity checks, and billing cycle transitions—will be triggered sequentially when the manager advances the tick.
 
 ## Behavior
 Manual Advancement: The GUI will provide a "Step" or "Advance Time" button. Clicking this calls processSingleTick().
 
-Event Orchestration: Inside processSingleTick(), the controller will sequentially command Gophers to move/damage, ask the Grid to supply power, and update the PowerCompany billing cycles based strictly on the logical tick.
+Event Orchestration: Inside processSingleTick(), the manager will sequentially command Gophers to move/damage, ask the Grid to supply power, and update the PowerCompany billing cycles based strictly on the logical tick.
 
 Time Travel: The jumpToTick(targetTick) method will allow the simulation to load a past state by coordinating with the ArchiveManager and ConfigurationManager to overwrite the current state with historical data.
 
@@ -168,6 +168,6 @@ Difficulty: Medium/Hard. The logic is simple, but wiring all existing components
 | ADR-001 | Destructive Gophers | Functional | Required (Client) |
 | ADR-002 | Archivability | Non-Functional | Required (Client) |
 | ADR-003 | Configurability | Non-Functional | Team-Selected |
-| ADR-004 | Simulation Controller| Core Architecture| Required (Constraints)|
+| ADR-004 | Simulation Manager | Core Architecture | Required (Constraints) |
 
 These four modifications work well together. Configurability supports user control over gopher behavior and archival rules, while archivability provides persistence for the broader simulation state. Together, they expand the realism, usability, and maintainability of the existing power grid system.

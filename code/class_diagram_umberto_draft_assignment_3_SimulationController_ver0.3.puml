@@ -25,7 +25,7 @@ skinparam linetype ortho
 skinparam nodesep 60
 skinparam ranksep 60
 
-' ===== Simulation Controller =====
+' ===== Simulation Manager =====
 enum SimulationStatus {
   READY
   RUNNING
@@ -33,7 +33,7 @@ enum SimulationStatus {
   STOPPED
 }
 
-class SimulationController {
+class SimulationManager {
   ' ===== Attributes =====
   - currentTick : Integer
   - status : SimulationStatus
@@ -231,11 +231,11 @@ enum MovementMode {
 
 abstract class GridNode {
   ' ===== Attributes =====
-  - maxDistance : Integer 
+  # maxDistance : Integer 
   ' {distance limit to connect to child level}
-  - initialCost : Real
-  - maintenanceCost : Real
-  - powerDemand : Real
+  # initialCost : Real
+  # maintenanceCost : Real
+  # powerDemand : Real
   ' ===== Operations =====
   + {abstract} checkCapacity() : Boolean
   + {abstract} updateParent(parentId : String) : void
@@ -323,12 +323,12 @@ class EquipmentIssue {
 
 ' ===== RELATIONSHIPS =====
 
-' Controller relationships (New for Assignment 3)
-SimulationController "1" --> "1" PowerCompany : orchestrates
-SimulationController "1" --> "1" GopherManager : controls
-SimulationController "1" --> "1" ArchiveManager : triggers cleanup
-SimulationController "*" --> "1" SimulationStatus : tracks state
-SimulationController "1" ..> "1" ConfigurationManager : uses
+' SimulationManager relationships (New for Assignment 3)
+SimulationManager "1" --> "1" PowerCompany : orchestrates
+SimulationManager "1" --> "1" GopherManager : controls
+SimulationManager "1" --> "1" ArchiveManager : triggers cleanup
+SimulationManager "*" --> "1" SimulationStatus : tracks state
+SimulationManager "1" ..> "1" ConfigurationManager : uses
 
 ' PowerCompany relationships
 PowerCompany "1" o-right- "0..*" PowerPlant : owns
