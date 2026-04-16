@@ -1,0 +1,27 @@
+@startuml
+title Powergrid Deployment Diagram
+
+left to right direction
+skinparam shadowing false
+
+node "Web Browser" <<device>> as Browser
+
+node "Docker Environment (docker-compose project: gatech)" <<executionEnvironment>> as DockerEnv {
+  node "frontend container" <<container>> as Site {
+    artifact "Powergrid Frontend Web App (planned)\nHTML/CSS/JavaScript\nNginx:80 -> Host:3001" as FE_Artifact
+  }
+
+  node "backend container" <<container>> as API {
+    artifact "Spring Boot REST API\nJar Artifact (Port 8080)" as BE_Artifact
+  }
+
+  database "database container" <<container>> as DB {
+    artifact "PostgreSQL Database\nPort 5432" as DB_Artifact
+  }
+}
+
+Browser --> Site : HTTP/HTTPS
+Site --> API : REST/JSON
+API --> DB : JDBC/SQL\njdbc:postgresql://db:5432/postgres
+
+@enduml
