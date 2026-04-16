@@ -22,6 +22,10 @@ However, `GridNode` currently combines two concerns: **spatial positioning** (`x
 We will introduce a new abstract class **`Location`** that encapsulates spatial positioning and distance calculation, and restructure `GridNode` to inherit from it. A new **`Gopher`** class will also inherit from `Location`, giving it coordinate-based positioning and proximity detection without inheriting power infrastructure logic.
 
 ```
+<<enumeration>> MovementMode
+  - CONTROLLED
+  - RANDOM
+
 Location (abstract)
   # x : Integer
   # y : Integer
@@ -39,18 +43,13 @@ GridNode (abstract) extends Location
 Gopher extends Location
   - gopherId : String
   - damageRadius : Real
-  - damageProbability : Real
   - damageLevel : Real
-  - movementRange : Integer
+  - damageProbability : Real
   - movementMode : MovementMode
+  - movementRange : Integer
   + moveTo(newX : Integer, newY : Integer) : void
   + moveRandomly() : void
   + applyDamage(target : GridNode) : void
-
-enum MovementMode {
-  CONTROLLED
-  RANDOM
-}
 ```
 
 When a gopher is near a relevant power infrastructure element, it will have a configurable chance of causing partial or total damage based on proximity. This will let the simulation represent outages and reduced service caused by nearby hazards.
