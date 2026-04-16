@@ -76,6 +76,7 @@ end note
 
 class BillManager {
   ' ===== Attributes =====
+    - billManagerId: String
     - standardRate : Real
     - currentBillingCycle : Integer
     - currentBillingStartDate : Date
@@ -171,6 +172,7 @@ class ConfigurationManager {
 
 class ArchiveManager {
   ' ===== Attributes =====
+  - archiveManagerId: String
   - basePath : String
   ' ===== Operations =====
   + archiveRecord(category : String, recordId : String) : void
@@ -202,6 +204,7 @@ abstract class Location {
 
 class GopherManager {
   ' ===== Attributes =====
+  - gopherManagerId: String
   ' ===== Operations =====
   + createGopher() : void
   + removeGopher() : void
